@@ -1,0 +1,230 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>THE CLAIM overlay</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=VT323&display=block" rel="stylesheet" />
+    <style>
+      /* zkClaim's design system (ui/src/zk/ds.css): ink and paper, flat print colours, heavy tight grotesk, stickers, inked stamps. */
+      :root {
+        --ink: #1d1c1a;
+        --ink-2: #2b2a27;
+        --paper: #f1e6d0;
+        --cobalt: #2150d6;
+        --tomato: #e1432f;
+        --mustard: #f3cf35;
+        --teal: #3ba38d;
+        --sky: #9cc0ff;
+        --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 1'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+        --specks: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='s'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .7 -.36'/></filter><rect width='100%' height='100%' filter='url(%23s)'/></svg>");
+        --distress: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='d'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' seed='7'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -8 5.25'/></filter><rect width='100%' height='100%' filter='url(%23d)'/></svg>");
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: transparent; }
+      body { font-family: 'Archivo', 'Arial Narrow', sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+      body.bg { background: var(--ink); }
+      .el { position: absolute; display: none; }
+      .full { left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; }
+      .inkbg { background-color: var(--ink); background-image: var(--specks), radial-gradient(ellipse at 50% 42%, #2b2a27 0%, var(--ink) 70%); }
+      .inkbg::after { content: ''; position: absolute; inset: 0; background-image: var(--grain); opacity: 0.08; mix-blend-mode: overlay; }
+      .meta { font-weight: 800; font-size: 22px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--paper); }
+
+      .sticker { width: max-content; border: 3px solid var(--ink); border-radius: 16px; padding: 12px 22px 15px; box-shadow: 7px 7px 0 var(--ink); transform-origin: 30% 50%; }
+      .sticker b { display: block; font-weight: 900; font-stretch: 78%; font-size: 40px; line-height: 0.95; text-transform: uppercase; }
+      .sticker span { display: block; margin-top: 6px; font-weight: 600; font-size: 25px; line-height: 1.15; }
+      .paper { background: var(--paper); } .mustard { background: var(--mustard); } .sky { background: var(--sky); }
+      .tomato { background: var(--tomato); color: var(--paper); }
+
+      .subwrap { left: 0; width: 1920px; bottom: 44px; justify-content: center; }
+      .sub { max-width: 1500px; text-align: center; padding: 9px 26px 13px; border-radius: 14px; background: rgb(29 28 26 / 0.86); color: var(--paper); font-weight: 620; font-size: 47px; line-height: 1.16; }
+
+      .stampwrap { width: max-content; transform-origin: 0 0; }
+      .stamp { text-align: center; border: 11px solid currentColor; border-radius: 24px; padding: 8px 40px 16px; background: rgb(241 230 208 / 0.9);
+        -webkit-mask-image: var(--distress); -webkit-mask-size: 260px; mask-image: var(--distress); mask-size: 260px; }
+      .stamp b { display: block; font-weight: 900; font-stretch: 70%; line-height: 0.92; text-transform: uppercase; }
+      .stamp span { display: block; margin-top: 4px; font-weight: 800; font-size: 34px; letter-spacing: 0.1em; text-transform: uppercase; }
+      .c-tomato { color: var(--tomato); } .c-cobalt { color: var(--cobalt); }
+
+      .docs { width: 418px; background: var(--paper); border: 3px solid var(--ink); border-radius: 20px; box-shadow: 8px 8px 0 var(--ink); padding: 14px 20px 8px; transform-origin: 80% 0; }
+      .docs header { display: flex; align-items: center; justify-content: space-between; font-weight: 800; font-size: 18px; letter-spacing: 0.1em; text-transform: uppercase; padding-bottom: 8px; border-bottom: 3px solid var(--ink); }
+      .docs header i { font: 400 46px/1 'VT323', monospace; font-style: normal; background: var(--tomato); color: var(--paper); border-radius: 12px; padding: 0 12px 2px; }
+      .docs li { list-style: none; display: none; align-items: center; gap: 14px; font-weight: 800; font-stretch: 88%; font-size: 30px; padding: 9px 0; border-bottom: 2px dashed rgb(29 28 26 / 0.25); transform-origin: 0 50%; }
+      .docs li:last-child { border-bottom: 0; }
+      .docs li em { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-weight: 900; font-size: 22px; color: var(--paper); background: var(--teal); }
+      .docs li.no { color: var(--tomato); }
+      .docs li.no em { background: var(--tomato); }
+      .docs ul { margin: 0; padding: 0; }
+
+      .steps { width: 400px; }
+      .step { display: none; gap: 16px; align-items: flex-start; margin-bottom: 22px; padding: 14px 18px 16px; border-radius: 16px; border: 3px solid transparent; transform-origin: 0 50%; }
+      .step em { font: 400 58px/0.8 'VT323', monospace; font-style: normal; }
+      .step b { display: block; font-weight: 900; font-stretch: 80%; font-size: 34px; line-height: 1; text-transform: uppercase; }
+      .step span { display: block; margin-top: 6px; font-weight: 600; font-size: 22px; line-height: 1.15; }
+      .step.on { background: var(--mustard); border-color: var(--ink); box-shadow: 6px 6px 0 var(--ink); }
+      .step.past { opacity: 0.45; }
+
+      .phone { border-style: solid; border-color: #121211; box-shadow: 0 30px 80px rgb(0 0 0 / 0.45), 0 0 0 2px #4a4944; }
+      .win { border: 6px solid var(--paper); box-shadow: 0 26px 80px rgb(0 0 0 / 0.55); }
+      .winlabel { transform-origin: 0 100%; }
+
+      .zero { width: 760px; }
+      .zero .big { font-weight: 900; font-stretch: 75%; font-size: 470px; line-height: 0.78; color: var(--mustard); text-shadow: 12px 12px 0 #000; margin: 30px 0 10px -10px; }
+      .zero .cap { color: var(--paper); font-weight: 600; font-size: 34px; }
+
+      .title h1 { position: absolute; left: 118px; top: 210px; margin: 0; font-weight: 900; font-stretch: 68%; font-size: 330px; line-height: 0.8; color: var(--paper); text-transform: uppercase; }
+      .title h1 i { font-style: normal; color: var(--mustard); }
+      .title .tl { position: absolute; left: 120px; top: 92px; } .title .tr { position: absolute; right: 120px; top: 92px; }
+      .title .stk { position: absolute; left: 1220px; top: 640px; transform: rotate(-4deg); }
+
+      .mark { opacity: 0.85; }
+      .logo .lg { position: absolute; left: 1300px; top: 440px; width: 540px; }
+      .end .lgsm { position: absolute; left: 930px; top: 545px; height: 185px; }
+      .logo .word { position: absolute; left: 118px; top: 236px; font-weight: 900; font-stretch: 70%; font-size: 300px; line-height: 0.8; color: var(--paper); }
+      .logo .tag { position: absolute; left: 124px; font-weight: 800; font-size: 76px; line-height: 1; }
+      .logo .t1 { top: 560px; color: var(--mustard); } .logo .t2 { top: 650px; color: var(--paper); }
+      .logo .tl { position: absolute; left: 120px; top: 92px; } .logo .tr { position: absolute; right: 120px; top: 92px; }
+      .logo .url { position: absolute; left: 124px; top: 860px; font: 400 52px/1 'VT323', monospace; color: var(--sky); }
+
+      .end .l { position: absolute; left: 140px; width: 1640px; font-weight: 800; font-size: 70px; line-height: 1.05; color: var(--paper); text-wrap: balance; }
+      .end .l1 { top: 190px; } .end .l2 { top: 330px; color: var(--mustard); }
+      .end .brand { position: absolute; left: 140px; top: 560px; font-weight: 900; font-stretch: 70%; font-size: 180px; line-height: 0.85; color: var(--paper); }
+      .end .tagline { position: absolute; left: 146px; top: 730px; font-weight: 800; font-size: 48px; color: var(--paper); }
+      .end .small { position: absolute; left: 146px; top: 900px; font-weight: 700; font-size: 26px; letter-spacing: 0.06em; text-transform: uppercase; color: rgb(241 230 208 / 0.75); }
+    </style>
+  </head>
+  <body>
+    <script>
+      const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+      const easeOut = (x) => 1 - Math.pow(1 - clamp(x), 3);
+      const back = (x) => { x = clamp(x); const c = 1.9; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+      const h = (html) => { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstElementChild; };
+      const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+      /** Entrance pop and exit fade for an element living in [inT, outT). */
+      const life = (t, inT, outT, { inDur = 0.3, outDur = 0.18 } = {}) => {
+        const lt = t - inT;
+        return { lt, o: Math.min(clamp(lt / 0.1), clamp((outT - t) / outDur)), s: 0.62 + 0.38 * back(lt / inDur) };
+      };
+      const show = (el, on) => (el.style.display = on ? '' : 'none');
+
+      const MAKERS = {
+        title(g) {
+          const [l1, l2] = g.lines ?? ['The', 'Claim'];
+          const n = h(`<div class="el full inkbg title"><div class="meta tl">${esc(g.metaL ?? 'A zkClaim film')}</div><div class="meta tr">${esc(g.metaR ?? 'Hackasol 5.0 · W3-01')}</div>
+            <h1>${esc(l1)}<br><i>${esc(l2)}</i></h1><div class="sticker mustard stk"><b>${esc(g.stickerHead ?? 'In Hindi')}</b><span>${esc(g.stickerSub ?? 'with English subtitles')}</span></div></div>`);
+          const h1 = n.querySelector('h1'), stk = n.querySelector('.stk');
+          return { n, at(t) { const l = life(t, g.in, g.out, { outDur: 0.25 }); const p = easeOut(l.lt / 0.6);
+            n.style.opacity = clamp((g.out - t) / 0.25); h1.style.transform = `translateY(${(1 - p) * 60}px)`; h1.style.opacity = p;
+            const q = clamp((l.lt - 0.5) / 0.3); stk.style.opacity = clamp(q * 4); stk.style.transform = `rotate(-4deg) scale(${0.62 + 0.38 * back(q)})`;
+            return `${p.toFixed(3)}${q.toFixed(3)}${n.style.opacity}`; } };
+        },
+        logo(g) {
+          const n = h(`<div class="el full inkbg logo"><div class="meta tl">Private insurance claims</div><div class="meta tr">On Midnight</div>
+            <div class="word">ZKCLAIM</div><div class="tag t1">Prove the claim.</div><div class="tag t2">Protect the patient.</div><div class="url">zkclaim.vercel.app</div>
+            <img class="lg" src="../work/logo.png" alt=""></div>`);
+          const word = n.querySelector('.word'), t1 = n.querySelector('.t1'), t2 = n.querySelector('.t2'), url = n.querySelector('.url'), lg = n.querySelector('.lg');
+          return { n, at(t) { const lt = t - g.in; const p = easeOut(lt / 0.5);
+            word.style.transform = `translateX(${(1 - p) * -80}px)`; word.style.opacity = p;
+            const m = easeOut((lt - 0.15) / 0.55); lg.style.opacity = m; lg.style.transform = `scale(${0.82 + 0.18 * m})`;
+            const a = easeOut((lt - 0.45) / 0.35), b = easeOut((lt - 0.8) / 0.35), c = easeOut((lt - 1.1) / 0.4);
+            t1.style.opacity = a; t1.style.transform = `translateY(${(1 - a) * 30}px)`; t2.style.opacity = b; t2.style.transform = `translateY(${(1 - b) * 30}px)`; url.style.opacity = c;
+            n.style.opacity = clamp((g.out - t) / 0.2);
+            return [p, m, a, b, c, n.style.opacity].map((x) => (+x).toFixed(3)).join(); } };
+        },
+        end(g) {
+          const n = h(`<div class="el full inkbg end"><div class="l l1">Your claim is not your medical history.</div>
+            <div class="l l2">Why should proving one mean revealing the other?</div><div class="brand">ZKCLAIM</div><img class="lgsm" src="../work/logo.png" alt="">
+            <div class="tagline">Prove the claim. Protect the patient.</div><div class="small">Zero-knowledge proofs on Midnight · Hackasol 5.0 · zkclaim.vercel.app</div></div>`);
+          const parts = [['.l1', 0.15], ['.l2', 1.55], ['.brand', 3.0], ['.lgsm', 3.1], ['.tagline', 3.35], ['.small', 3.7]].map(([s, d]) => [n.querySelector(s), d]);
+          return { n, at(t) { const lt = t - g.in; const key = parts.map(([el, d]) => { const p = easeOut((lt - d) / 0.45);
+            el.style.opacity = p; el.style.transform = `translateY(${(1 - p) * 26}px)`; return p.toFixed(3); }); return key.join(); } };
+        },
+        sticker(g) {
+          const [head, ...rest] = g.lines;
+          const n = h(`<div class="el sticker ${g.tone}"><b>${esc(head)}</b>${rest.map((x) => `<span>${esc(x)}</span>`).join('')}</div>`);
+          n.style.left = `${g.x}px`; n.style.top = `${g.y}px`;
+          return { n, at(t) { const l = life(t, g.in, g.out); n.style.opacity = l.o; n.style.transform = `rotate(${g.rot}deg) scale(${l.s})`; return `${l.o.toFixed(3)}${l.s.toFixed(3)}`; } };
+        },
+        sub(g) {
+          const n = h(`<div class="el subwrap"><div class="sub">${esc(g.text)}</div></div>`);
+          return { n, at() { n.style.display = 'flex'; return 'on'; } };
+        },
+        stamp(g) {
+          const n = h(`<div class="el stampwrap"><div class="stamp c-${g.tone}"><b style="font-size:${g.size}px">${esc(g.text)}</b><span>${esc(g.sub)}</span></div></div>`);
+          n.style.left = `${g.x}px`; n.style.top = `${g.y}px`;
+          return { n, at(t) { const lt = t - g.in; const p = easeOut(lt / 0.16); const s = 1.9 - 0.9 * p;
+            const shake = lt > 0.16 && lt < 0.34 ? Math.sin(lt * 90) * 4 * (0.34 - lt) / 0.18 : 0;
+            n.style.opacity = Math.min(clamp(lt / 0.05), clamp((g.out - t) / 0.15));
+            n.style.transform = `translate(${shake}px, 0) rotate(${g.rot}deg) scale(${s}) translate(-50%, -50%)`;
+            return `${p.toFixed(3)}${shake.toFixed(2)}${n.style.opacity}`; } };
+        },
+        docs(g) {
+          const n = h(`<div class="el docs"><header><span>Documents demanded</span><i>0</i></header><ul>${g.items
+            .map((it) => `<li class="${it.ok ? 'ok' : 'no'}"><em>${it.ok ? '✓' : '?!'}</em>${esc(it.text)}</li>`).join('')}</ul></div>`);
+          n.style.left = `${g.x}px`; n.style.top = `${g.y}px`;
+          const lis = [...n.querySelectorAll('li')], count = n.querySelector('header i');
+          return { n, at(t) { const l = life(t, g.in, g.out); n.style.opacity = l.o; n.style.transform = `rotate(2deg) scale(${l.s})`;
+            let shown = 0; const key = lis.map((li, i) => { const lt = t - g.items[i].at; const on = lt >= 0; show(li, on); if (!on) return '-';
+              shown++; li.style.display = 'flex'; const s = 0.5 + 0.5 * back(lt / 0.25); li.style.transform = `scale(${s})`; return s.toFixed(3); });
+            count.textContent = shown; return `${l.o.toFixed(3)}${l.s.toFixed(3)}${key.join()}`; } };
+        },
+        steps(g) {
+          const n = h(`<div class="el steps">${g.items.map((it) => `<div class="step"><em>${it.n}</em><div><b>${esc(it.text)}</b><span>${esc(it.sub)}</span></div></div>`).join('')}</div>`);
+          n.style.left = `${g.x}px`; n.style.top = `${g.y}px`;
+          const els = [...n.querySelectorAll('.step')];
+          return { n, at(t) { n.style.opacity = clamp((g.out - t) / 0.2); let active = -1; g.items.forEach((it, i) => { if (t >= it.at) active = i; });
+            const key = els.map((el, i) => { const lt = t - g.items[i].at; if (lt < 0) { show(el, false); return '-'; }
+              el.style.display = 'flex'; el.className = `step ${i === active ? 'on' : 'past'}`; const s = 0.7 + 0.3 * back(lt / 0.3);
+              el.style.transform = `scale(${s})`; return `${i === active}${s.toFixed(3)}`; });
+            return key.join() + n.style.opacity; } };
+        },
+        mark(g) {
+          const n = h(`<img class="el mark" src="../work/logo.png" alt="">`);
+          Object.assign(n.style, { left: `${g.x}px`, top: `${g.y}px`, width: `${g.w}px` });
+          return { n, at() { return 'on'; } };
+        },
+        phone(g) {
+          const b = g.bezel;
+          const n = h(`<div class="el phone"></div>`);
+          Object.assign(n.style, { left: `${g.x - b}px`, top: `${g.y - b}px`, width: `${g.w + 2 * b}px`, height: `${g.h + 2 * b}px`, borderWidth: `${b}px`, borderRadius: `${g.r + b}px` });
+          return { n, at() { return 'on'; } };
+        },
+        window(g) {
+          const n = h(`<div class="el"><div class="win" style="position:absolute;left:${g.x - 6}px;top:${g.y - 6}px;width:${g.w + 12}px;height:${g.h + 12}px;border-radius:${g.r + 6}px"></div>
+            <div class="sticker mustard winlabel" style="position:absolute;left:${g.x + 28}px;top:${g.y - 52}px"><b>${esc(g.label)}</b></div></div>`);
+          n.style.left = '0px'; n.style.top = '0px';
+          const label = n.querySelector('.winlabel');
+          return { n, at(t) { const l = life(t, g.in + 0.12, g.out); label.style.opacity = l.o; label.style.transform = `rotate(-1.5deg) scale(${l.s})`; return `${l.o.toFixed(3)}${l.s.toFixed(3)}`; } };
+        },
+        zero(g) {
+          const n = h(`<div class="el zero"><div class="sticker paper" style="display:inline-block"><b>${esc(g.label)}</b></div><div class="big">${esc(g.value)}</div>
+            <div class="cap">Every view is logged on-chain first.</div></div>`);
+          n.style.left = `${g.x}px`; n.style.top = `${g.y}px`;
+          const big = n.querySelector('.big');
+          return { n, at(t) { const l = life(t, g.in, g.out); n.style.opacity = l.o; const s = 0.4 + 0.6 * back((t - g.in - 0.1) / 0.35);
+            big.style.transform = `scale(${s})`; big.style.transformOrigin = '20% 80%'; return `${l.o.toFixed(3)}${s.toFixed(3)}`; } };
+        },
+      };
+
+      let items = [];
+      window.setup = (data) => {
+        for (const g of data.graphics) {
+          const m = MAKERS[g.type](g);
+          document.body.appendChild(m.n);
+          items.push({ g, ...m });
+        }
+      };
+      /** Draws the frame at film time t; returns a key that changes whenever the picture does. */
+      window.renderAt = (t) => {
+        const key = [];
+        items.forEach((it, i) => {
+          const on = t >= it.g.in && t < it.g.out;
+          if (!on) return void (it.n.style.display = 'none');
+          it.n.style.display = it.g.type === 'sub' ? 'flex' : 'block';
+          key.push(`${i}:${it.at(t)}`);
+        });
+        return key.join('|');
+      };
+    </script>
+  </body>
+</html>

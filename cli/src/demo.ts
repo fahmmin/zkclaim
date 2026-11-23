@@ -1,5 +1,6 @@
 // End-to-end claim with real zero-knowledge proofs on a Midnight network:
-// Insurer -> Patient -> Hospital -> automatic payout, then a replay that must fail.
+// Insurer -> Patient -> Hospital -> automatic payout, then a replay that must fail, and a second bill whose
+// permission the patient withdraws before the hospital claims it. Amounts are NIGHT base units (6 decimals).
 // Local devnet: `npm run env:up`, then `npm run demo`. Also the stage fallback if a browser wallet misbehaves.
 import { randomBytes } from 'node:crypto';
 import path from 'node:path';
@@ -12,6 +13,8 @@ import { encodeUserAddress } from '@midnight-ntwrk/midnight-js-protocol/v9/compa
 import { deployContract, submitCallTx } from '@midnight-ntwrk/midnight-js-contracts';
 import type { EnvironmentConfiguration } from '@midnight-ntwrk/testkit-js';
 import {
+  type ActionName,
+  actions,
   Contract,
   createPrivateState,
   ledger,
@@ -23,6 +26,7 @@ import {
 import { getConfig } from './config.js';
 import { type MidnightWalletProvider, startWallet, waitForDust } from './wallet.js';
 import { buildProviders, ledgerState, type ZkClaimProviders } from './providers.js';
+import { receiptUrl } from '../../ui/src/verify/receipt.ts';
 
 // @ts-expect-error the indexer client's GraphQL subscriptions need a global WebSocket in Node
 globalThis.WebSocket = WebSocket;
@@ -32,6 +36,17 @@ const say = (msg: string) => console.log(msg);
 const hex = (b: Uint8Array) => Buffer.from(b).toString('hex');
 const short = (b: Uint8Array) => `${hex(b).slice(0, 10)}…`;
 const NIGHT = '0'.repeat(64);
+
+/** An error with its causes, which Midnight.js nests around the contract's own message. */
+const reasonOf = (e: unknown): string => {
+  const parts: string[] = [];
+  for (let x: unknown = e; x && parts.length < 4; x = (x as { cause?: unknown }).cause) parts.push(x instanceof Error ? x.message : String(x));
+  return parts.join(' ← ');
+};
+const refusal = (tx: Promise<unknown>) => tx.then(
+  () => 'ACCEPTED (bug!)',
+  (e: unknown) => `rejected: ${reasonOf(e)}`,
+);
 
 const zkConfigPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../contract/src/managed/zkclaim');
 const CompiledZkClaim = CompiledContract.make('ZkClaim', Contract).pipe(
@@ -120,28 +135,32 @@ async function main() {
       compiledContract: CompiledZkClaim,
       privateStateId: 'insurer',
       initialPrivateState: createPrivateState(sk.insurer),
-      args: [pk('insurer')],
+      args: [pk('insurer'), new Uint8Array(randomBytes(32))], // emergency key: unused by this claims-only demo
     }),
   );
   const contractAddress = deployed.deployTxData.public.contractAddress;
   say(`  contract: ${contractAddress}`);
 
   // The patient shows the hospital their policy card; both hold the record.
-  await prov.hospital.privateStateProvider.forContract(contractAddress).set('hospital', createPrivateState(sk.hospital, policy, rec));
-  await prov.patient.privateStateProvider.forContract(contractAddress).set('patient', createPrivateState(sk.patient, policy, rec));
+  const holdBoth = (r: typeof rec) =>
+    Promise.all((['hospital', 'patient'] as const).map((who) => prov[who].privateStateProvider.forContract(contractAddress).set(who, createPrivateState(sk[who], policy, r))));
+  await holdBoth(rec);
 
-  const call = (who: Role, circuitId: string, ...args: unknown[]) =>
-    submitCallTx(prov[who], {
+  // A circuit, or a named action (addHospital, issuePolicy, ...) that runs a shared circuit.
+  const call = (who: Role, name: string, ...given: unknown[]) => {
+    const { circuitId, args } = name in actions ? (actions[name as ActionName] as (...a: unknown[]) => { circuitId: string; args: unknown[] })(...given) : { circuitId: name, args: given };
+    return submitCallTx(prov[who], {
       compiledContract: CompiledZkClaim,
       contractAddress,
       privateStateId: who,
       circuitId,
       ...(args.length ? { args } : {}),
     } as unknown as Parameters<typeof submitCallTx>[1]);
+  };
 
-  await timed('Funding payout pool with 5000 NIGHT', () => call('insurer', 'fundPool', 5_000n));
+  await timed('Funding payout pool with 5000 base units', () => call('insurer', 'fundPool', 5_000n));
   await timed('Approving hospital', () => call('insurer', 'addHospital', pk('hospital')));
-  await timed(`Issuing policy ${short(policyC)}`, () => call('insurer', 'issuePolicy', policyC));
+  await timed(`Issuing policy ${short(policyC)}`, () => call('insurer', 'issuePolicy', policyC, 'bafy-demo-card-cid'));
 
   say('\nHospital');
   await timed(`Anchoring encrypted record ${short(recordC)}`, () => call('hospital', 'anchorRecord', recordC, 'bafy-demo-record-cid'));
@@ -153,23 +172,41 @@ async function main() {
   const payTo = { bytes: encodeUserAddress(w.hospital.unshieldedKeystore.getAddress()) };
   const before = await nightBalance(w.hospital);
   const asOf = () => BigInt(Math.floor(Date.now() / 1000) + 600);
-  const res = await timed('Proving and submitting claim for 400 NIGHT', () => call('hospital', 'submitClaim', 400n, asOf(), payTo));
+  const res = await timed('Proving and submitting claim for 400 base units', () => call('hospital', 'submitClaim', 400n, asOf(), payTo));
   const after = await waitForBalance(w.hospital, before + 400n);
-  say(`  hospital NIGHT: ${before} -> ${after} (+${after - before})`);
+  say(`  hospital NIGHT balance (base units): ${before} -> ${after} (+${after - before})`);
   say(`  nullifier: ${short(res.private.result as Uint8Array)}`);
+  // The wallet-free receipt for this payout (ui/src/verify): its values come from the ledger, not from this script.
+  const paid = ledger(ledgerState(await prov.hospital.publicDataProvider.queryContractState(contractAddress))).claims;
+  const n = res.private.result as Uint8Array;
+  const s = paid.member(n) ? paid.lookup(n) : null;
+  say(`  receipt: ${s ? receiptUrl({ network: config.networkId, contract: contractAddress, nullifier: hex(n), policy: hex(s.policy), amount: s.amount, at: s.at }, process.env['ZKCLAIM_UI'] ?? 'http://localhost:5173/') : 'not indexed yet'}`);
 
-  const replay = await call('hospital', 'submitClaim', 400n, asOf(), payTo).then(
-    () => 'ACCEPTED (bug!)',
-    (e: unknown) => `rejected: ${e instanceof Error ? e.message : String(e)}`,
-  );
+  const replay = await refusal(call('hospital', 'submitClaim', 400n, asOf(), payTo));
   say(`  replaying the same claim: ${replay}`);
+
+  say('\nPatient withdraws permission on a second, unpaid bill');
+  const rec2 = { record: { ...record, procedureCode: 202n, amount: 300n, contentHash: new Uint8Array(randomBytes(32)) }, salt: new Uint8Array(randomBytes(32)) };
+  const record2C = pureCircuits.recordCommitment(rec2.record, rec2.salt);
+  await holdBoth(rec2);
+  await timed(`Hospital anchors record ${short(record2C)}`, () => call('hospital', 'anchorRecord', record2C, 'bafy-demo-record-cid-2'));
+  await timed('Patient consents', () => call('patient', 'consentToClaim'));
+  await timed('Patient withdraws permission before the hospital claims', () => call('patient', 'withdrawConsent'));
+  const withdrawn = await refusal(call('hospital', 'submitClaim', 300n, asOf(), payTo));
+  say(`  hospital claims 300 base units anyway: ${withdrawn}`);
 
   say('\nWhat the insurer sees on-chain');
   const l = ledger(ledgerState(await prov.insurer.publicDataProvider.queryContractState(contractAddress)));
-  say(`  settled claims: ${l.claims.size()}, total paid: ${l.totalPaid}, paid on policy ${short(policyC)}: ${l.spent.lookup(policyC)}`);
+  say(`  settled claims: ${l.claims.size()}, total paid: ${l.totalPaid}, paid on policy ${short(policyC)}: ${l.spent.lookup(policyC)} (base units)`);
   say('  never on-chain: procedure code, diagnosis, record contents, policy limit/expiry/covered set, which approved hospital, patient identity\n');
 
-  if (after - before !== 400n || !replay.startsWith('rejected')) throw new Error('Demo did not behave as expected');
+  const ok =
+    after - before === 400n &&
+    replay.includes('Claim already settled') &&
+    withdrawn.includes('Patient has not consented to this claim') &&
+    l.totalPaid === 400n &&
+    l.claims.size() === 1n;
+  if (!ok) throw new Error('Demo did not behave as expected');
   await Promise.all(wallets.map((x) => x.stop()));
 }
 

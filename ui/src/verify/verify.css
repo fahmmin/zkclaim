@@ -1,0 +1,81 @@
+/* The settlement check page: ds.css does the poster look; these are the few pieces only this page has. */
+
+.verify .verdict-body {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.verify .verdict-body > .stack {
+  flex: 1 1 340px;
+  min-width: 0;
+}
+
+.verify .verdict-stamp {
+  font-size: clamp(40px, 9vw, 84px);
+  /* the rotation takes no layout space: keep its corners inside the card */
+  margin: 0.22em 0.12em;
+}
+
+.verify .reasons {
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+
+.verify .reasons li + li {
+  margin-top: 6px;
+}
+
+.verify input.amount {
+  font-family: var(--data);
+  font-size: 30px;
+  padding: 8px 13px;
+  letter-spacing: 0.04em;
+}
+
+.verify textarea.hex {
+  font-family: var(--data);
+  font-size: 18px;
+  min-height: 0;
+  resize: none;
+  field-sizing: content;
+  overflow-wrap: anywhere;
+}
+
+.verify .field small {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.verify .edited {
+  font-style: normal;
+  background: var(--tomato);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 1px 8px;
+  margin-left: 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.verify pre {
+  margin: 0;
+  font-family: var(--data);
+  font-size: 16px;
+  line-height: 1.15;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: rgb(0 0 0 / 0.28);
+  border-radius: 12px;
+  padding: 12px 14px;
+  max-height: 340px;
+  overflow: auto;
+}
+
+.verify details summary {
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 13px;
+  margin: 8px 0;
+}

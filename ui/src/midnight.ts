@@ -4,11 +4,7 @@ import { CostModel } from '@midnight-ntwrk/midnight-js-protocol/v9';
 import { CompiledContract } from '@midnight-ntwrk/midnight-js-protocol/v9/compact-js';
 import type { Configuration, ConnectedAPI, InitialAPI } from '@midnightntwrk/dapp-connector-api';
 import { FetchZkConfigProvider } from '@midnight-ntwrk/midnight-js-fetch-zk-config-provider';
-import {
-  dappConnectorNetwork,
-  dappConnectorProofProvider,
-  dappConnectorWalletProviders,
-} from '@midnight-ntwrk/midnight-js-dapp-connector-proof-provider';
+import { dappConnectorProofProvider, dappConnectorWalletProviders } from '@midnight-ntwrk/midnight-js-dapp-connector-proof-provider';
 import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
 import type { MidnightProviders } from '@midnight-ntwrk/midnight-js-types';
 import { Contract, witnesses } from '@zkclaim/contract';
@@ -46,11 +42,26 @@ async function connectWithRetry(wallet: InitialAPI, networkId: string): Promise<
   }
 }
 
+/**
+ * The wallet's network id and indexer. Not `dappConnectorNetwork`: it also requires a node URI, which 1AM leaves
+ * empty on Preprod (the wallet submits transactions itself, so the dApp never needs the node).
+ */
+function walletNetwork(c: Configuration) {
+  const check = (field: string, value: string, schemes: string[]) => {
+    if (!URL.canParse(value) || !schemes.includes(new URL(value).protocol)) throw new Error(`The wallet's ${field} is not a ${schemes.join(' or ')} URL`);
+  };
+  if (!c.networkId?.trim()) throw new Error("The wallet didn't report a network id");
+  check('indexerUri', c.indexerUri, ['http:', 'https:']);
+  check('indexerWsUri', c.indexerWsUri, ['ws:', 'wss:']);
+  return { networkId: c.networkId, indexer: { queryURL: c.indexerUri, subscriptionURL: c.indexerWsUri } };
+}
+
 export async function connectWallet(networkId: string): Promise<Wallet> {
   const initial = findWallet();
   if (!initial) throw new Error('No Midnight wallet found. Install 1AM in this Chrome profile, then reload the page.');
   const api = await connectWithRetry(initial, networkId);
-  const [config, network] = await Promise.all([api.getConfiguration(), dappConnectorNetwork(api)]);
+  const config = await api.getConfiguration();
+  const network = walletNetwork(config);
   // Keys, ZKIR and the integrity manifest are served from this site's root (vite publicDir).
   const zkConfigProvider = new FetchZkConfigProvider(window.location.origin, { fetchFunc: fetch.bind(window) });
   const providers: ZkClaimProviders = {

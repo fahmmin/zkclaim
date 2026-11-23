@@ -1,10 +1,12 @@
 // zkClaim: a hospital proves an insurance claim is valid without revealing the patient's
-// diagnosis, procedure or record, and the contract pays the claim automatically.
+// diagnosis, procedure or record, and the contract pays the claim automatically. Patients keep
+// their records encrypted off-chain and control, on-chain, who may read them.
 //
 // Public on-chain: claim amount, policy commitment, claim nullifier, hospital-list root,
-// record-tree root, consent tag, payee address.
+// record-tree root, consent tag, payee address, record/card CIDs, access grants and the audit trail.
 // Private (witnesses only): procedure code, policy terms (limit, expiry, covered set),
-// treatment record, which approved hospital is claiming, and every salt and secret key.
+// treatment record, which approved hospital is claiming, the record owner's identity, and every
+// salt and secret key.
 pragma language_version 0.28;
 
 import CompactStandardLibrary;
@@ -26,15 +28,50 @@ export struct TreatmentRecord {
   contentHash: Bytes<32>;
 }
 
+// Access roles: 1 doctor, 2 lab, 3 pharmacy (granted by the patient), 4 emergency (break-glass only).
+export struct Grant {
+  expiresAt: Uint<64>;
+  role: Uint<8>;
+}
+
+export struct Settlement {
+  policy: Bytes<32>;
+  amount: Uint<64>;
+  at: Uint<64>;
+}
+
+export enum AuditKind { granted, revoked, viewed, breakGlass }
+
+export struct AuditEntry {
+  kind: AuditKind;
+  record: Bytes<32>;
+  actor: Bytes<32>;
+  at: Uint<64>;
+  detail: Bytes<32>;
+}
+
 export ledger insurer: Bytes<32>;
 export ledger hospitals: HistoricMerkleTree<10, Bytes<32>>;
 export ledger policies: Set<Bytes<32>>;
+// Policy commitment -> IPFS CID of the virtual policy card, sealed to the patient's encryption key.
+export ledger policyCids: Map<Bytes<32>, Opaque<"string">>;
 export ledger spent: Map<Bytes<32>, Uint<64>>;
 export ledger records: HistoricMerkleTree<16, Bytes<32>>;
+// Record commitment -> IPFS CID of the sealed FHIR record.
 export ledger recordCids: Map<Bytes<32>, Opaque<"string">>;
 export ledger consents: Set<Bytes<32>>;
-export ledger claims: Set<Bytes<32>>;
+export ledger claims: Map<Bytes<32>, Settlement>;
 export ledger totalPaid: Uint<64>;
+// Identity -> X25519 public key that record and card keys are sealed to.
+export ledger encKeys: Map<Bytes<32>, Bytes<32>>;
+// Every record key is also sealed to this key, for break-glass access.
+export ledger emergencyKey: Bytes<32>;
+export ledger responders: Set<Bytes<32>>;
+// grantKey(record, grantee) -> grant, and -> the record's section keys wrapped for that grantee.
+export ledger grants: Map<Bytes<32>, Grant>;
+export ledger grantKeys: Map<Bytes<32>, Opaque<"string">>;
+export ledger audit: Map<Uint<64>, AuditEntry>;
+export ledger auditCount: Counter;
 
 witness secretKey(): Bytes<32>;
 witness policyTerms(): PolicyTerms;
@@ -44,8 +81,12 @@ witness recordSalt(): Bytes<32>;
 witness hospitalPath(pk: Bytes<32>): MerkleTreePath<10, Bytes<32>>;
 witness recordPath(commitment: Bytes<32>): MerkleTreePath<16, Bytes<32>>;
 
-constructor(insurerPk: Bytes<32>) {
+// Every exported circuit adds ~2.7 KB (its verifier key) to the deploy transaction, and the node
+// refuses a deploy past roughly half a block ("Transaction would exhaust the block limits"): 12
+// circuits failed, 9 deploy. So related actions share a circuit (`admin`, `setAccess`, `logView`).
+constructor(insurerPk: Bytes<32>, emergencyPk: Bytes<32>) {
   insurer = disclose(insurerPk);
+  emergencyKey = disclose(emergencyPk);
 }
 
 export pure circuit publicKey(sk: Bytes<32>): Bytes<32> {
@@ -69,8 +110,36 @@ export pure circuit claimNullifier(recordC: Bytes<32>, salt: Bytes<32>): Bytes<3
   return persistentHash<Vector<3, Bytes<32>>>([pad(32, "zkclaim:nullifier:v1"), recordC, salt]);
 }
 
+export pure circuit grantKey(record: Bytes<32>, grantee: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<3, Bytes<32>>>([pad(32, "zkclaim:grant:v1"), record, grantee]);
+}
+
 circuit assertInsurer(): [] {
   assert(publicKey(secretKey()) == insurer, "Only the insurer can do this");
+}
+
+// `asOf` is the caller's clock: it may not be behind the block time, nor more than 15 minutes ahead
+// of it, so expiry checks and audit timestamps can be trusted.
+circuit currentTime(asOf: Uint<64>): Uint<64> {
+  const t = disclose(asOf);
+  assert(blockTimeLte(t), "Time is not current");
+  assert(blockTimeGt((t - 900) as Uint<64>), "Time is not current");
+  return t;
+}
+
+circuit logAudit(kind: AuditKind, record: Bytes<32>, actor: Bytes<32>, at: Uint<64>, detail: Bytes<32>): [] {
+  audit.insert(auditCount.read(), AuditEntry { kind: kind, record: record, actor: actor, at: at, detail: detail });
+  auditCount.increment(1);
+}
+
+// Proves the caller is the patient of the record in private state, without revealing who they are,
+// and returns the (already public) record commitment.
+circuit ownedRecord(): Bytes<32> {
+  const record = treatmentRecord();
+  assert(record.patientPk == publicKey(secretKey()), "Record belongs to someone else");
+  const c = disclose(recordCommitment(record, recordSalt()));
+  assert(recordCids.member(c), "Record was never anchored");
+  return c;
 }
 
 // Proves the caller is on the approved list without revealing which entry.
@@ -84,26 +153,51 @@ circuit approvedHospitalPk(): Bytes<32> {
 
 // ---- Insurer ----
 
-export circuit addHospital(pk: Bytes<32>): [] {
+// All insurer administration, in one circuit so the deploy stays small (see `actions` in
+// contracts/src/actions.ts for the named forms):
+//   1 approve hospital `pk`
+//   2 remove the hospital at `index`: overwrites the leaf and forgets old roots, so proofs built on
+//     earlier roots stop verifying
+//   3 issue the policy `commitment`; `cid` points at the patient's virtual policy card (terms + salt),
+//     sealed to the patient's key
+//   4 approve emergency responder `pk`
+//   5 withdraw emergency responder `pk`
+export circuit admin(action: Uint<8>, pk: Bytes<32>, index: Uint<64>, commitment: Bytes<32>, cid: Opaque<"string">): [] {
   assertInsurer();
-  hospitals.insert(disclose(pk));
-}
-
-// Overwrites the leaf and forgets old roots, so proofs built on earlier roots stop verifying.
-export circuit removeHospital(index: Uint<64>): [] {
-  assertInsurer();
-  hospitals.insertIndexDefault(disclose(index));
-  hospitals.resetHistory();
-}
-
-export circuit issuePolicy(commitment: Bytes<32>): [] {
-  assertInsurer();
-  policies.insert(disclose(commitment));
+  const a = disclose(action);
+  if (a == 1) {
+    hospitals.insert(disclose(pk));
+  } else {
+    if (a == 2) {
+      hospitals.insertIndexDefault(disclose(index));
+      hospitals.resetHistory();
+    } else {
+      if (a == 3) {
+        const c = disclose(commitment);
+        policies.insert(c);
+        policyCids.insert(c, disclose(cid));
+      } else {
+        if (a == 4) {
+          responders.insert(disclose(pk));
+        } else {
+          assert(a == 5, "Unknown admin action");
+          responders.remove(disclose(pk));
+        }
+      }
+    }
+  }
 }
 
 // Deposits NIGHT into the payout pool. Anyone may top it up.
 export circuit fundPool(amount: Uint<128>): [] {
   receiveUnshielded(default<Bytes<32>>, disclose(amount));
+}
+
+// ---- Anyone ----
+
+// Publishes the caller's X25519 key, so others can seal records and grants to them.
+export circuit registerEncKey(key: Bytes<32>): [] {
+  encKeys.insert(disclose(publicKey(secretKey())), disclose(key));
 }
 
 // ---- Hospital ----
@@ -118,17 +212,74 @@ export circuit anchorRecord(commitment: Bytes<32>, cid: Opaque<"string">): [] {
 
 // ---- Patient ----
 
-// The patient authorises a claim on one record under one policy. Only the record's own
-// patient can produce the tag, and it reveals nothing about either.
-export circuit consentToClaim(): [] {
+// The patient authorises a claim on one record under one policy, or withdraws that authorisation
+// while it is unpaid. Only the record's own patient can produce the tag, and it reveals nothing about
+// either. Ledger order decides a race: a withdrawal that lands first stops even a claim proved earlier,
+// and once the claim is paid there is nothing left to withdraw.
+export circuit consentToClaim(withdraw: Boolean): [] {
   const pk = publicKey(secretKey());
   const terms = policyTerms();
   const record = treatmentRecord();
   assert(terms.holderPk == pk, "Policy belongs to someone else");
   assert(record.patientPk == pk, "Record belongs to someone else");
   const salt = recordSalt();
-  const tag = consentTag(recordCommitment(record, salt), policyCommitment(terms, policySalt()), salt);
-  consents.insert(disclose(tag));
+  const recordC = recordCommitment(record, salt);
+  const tag = disclose(consentTag(recordC, policyCommitment(terms, policySalt()), salt));
+  if (disclose(withdraw)) {
+    assert(!claims.member(disclose(claimNullifier(recordC, salt))), "Claim already settled");
+    assert(consents.member(tag), "No consent to withdraw");
+    consents.remove(tag);
+  } else {
+    consents.insert(tag);
+  }
+}
+
+// The record owner's access control. Roles 1 doctor, 2 lab, 3 pharmacy grant read access until
+// `expiresAt`; `wrappedKey` holds only that role's section keys, sealed to the grantee. Role 0 revokes:
+// it removes the grant and points the record at `newCid`, a copy re-encrypted under new keys, so the old
+// wrapped keys open nothing new. The patient's identity never appears on-chain.
+export circuit setAccess(grantee: Bytes<32>, role: Uint<8>, expiresAt: Uint<64>, wrappedKey: Opaque<"string">, newCid: Opaque<"string">, asOf: Uint<64>): [] {
+  const at = currentTime(asOf);
+  const record = ownedRecord();
+  const who = disclose(grantee);
+  const key = grantKey(record, who);
+  const r = disclose(role);
+  if (r == 0) {
+    assert(grants.member(key), "No access grant for this record");
+    grants.remove(key);
+    grantKeys.remove(key);
+    recordCids.insert(record, disclose(newCid));
+    logAudit(AuditKind.revoked, record, who, at, default<Bytes<32>>);
+  } else {
+    assert(r <= 3, "Unknown access role");
+    const until = disclose(expiresAt);
+    assert(until > at, "Grant must expire in the future");
+    grants.insert(key, Grant { expiresAt: until, role: r });
+    grantKeys.insert(key, disclose(wrappedKey));
+    logAudit(AuditKind.granted, record, who, at, default<Bytes<32>>);
+  }
+}
+
+// ---- Doctor, lab, pharmacy, responder ----
+
+// Every read is logged first; the app decrypts only after this succeeds. A non-zero `reason` (the hash
+// of a written justification) is break-glass: an approved responder, when the patient cannot consent,
+// gets a one-hour emergency grant, logged loudly with the reason, before the view itself is logged.
+export circuit logView(record: Bytes<32>, reason: Bytes<32>, asOf: Uint<64>): [] {
+  const at = currentTime(asOf);
+  const viewer = disclose(publicKey(secretKey()));
+  const r = disclose(record);
+  const why = disclose(reason);
+  const key = grantKey(r, viewer);
+  if (why != default<Bytes<32>>) {
+    assert(responders.member(viewer), "Not an approved emergency responder");
+    assert(recordCids.member(r), "Record was never anchored");
+    grants.insert(key, Grant { expiresAt: (at + 3600) as Uint<64>, role: 4 });
+    logAudit(AuditKind.breakGlass, r, viewer, at, why);
+  }
+  assert(grants.member(key), "No access grant for this record");
+  assert(grants.lookup(key).expiresAt > at, "Access grant has expired");
+  logAudit(AuditKind.viewed, r, viewer, at, default<Bytes<32>>);
 }
 
 // ---- The claim proof ----
@@ -142,9 +293,11 @@ export circuit submitClaim(amount: Uint<64>, asOf: Uint<64>, payTo: UserAddress)
   const policyC = disclose(policyCommitment(terms, policySalt()));
   assert(policies.member(policyC), "Unknown policy");
 
-  // 3. Policy is active: expiry > asOf >= current block time.
-  assert(blockTimeLte(disclose(asOf)), "Claim date is in the past");
-  assert(terms.expiresAt > asOf, "Policy has expired");
+  // 3. Policy is active: expiry > asOf >= current block time (and asOf is no more than 15 minutes ahead).
+  const at = disclose(asOf);
+  assert(blockTimeLte(at), "Claim date is in the past");
+  assert(blockTimeGt((at - 900) as Uint<64>), "Time is not current");
+  assert(terms.expiresAt > at, "Policy has expired");
 
   // 4. The treatment record exists on-chain and belongs to this hospital and policy holder.
   const record = treatmentRecord();
@@ -171,7 +324,7 @@ export circuit submitClaim(amount: Uint<64>, asOf: Uint<64>, payTo: UserAddress)
   // 7. Each record can be claimed once.
   const nullifier = disclose(claimNullifier(recordC, salt));
   assert(!claims.member(nullifier), "Claim already settled");
-  claims.insert(nullifier);
+  claims.insert(nullifier, Settlement { policy: policyC, amount: disclose(amount), at: at });
 
   // 8. Pay the hospital from the pool.
   totalPaid = (totalPaid + disclose(amount)) as Uint<64>;

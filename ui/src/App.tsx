@@ -65,7 +65,8 @@ export default function App() {
       compiledContract: CompiledZkClaim,
       privateStateId: PRIVATE_STATE_ID,
       initialPrivateState: createPrivateState(sk),
-      args: [pureCircuits.publicKey(sk)],
+      // No emergency key here: this page only checks deploy and signing; the app's live mode deploys with one.
+      args: [pureCircuits.publicKey(sk), new Uint8Array(32)],
     });
     const address = deployed.deployTxData.public.contractAddress;
     localStorage.setItem('zkclaim-contract', address);

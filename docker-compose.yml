@@ -61,3 +61,21 @@ services:
     environment:
       CFG_PRESET: 'dev'
       SIDECHAIN_BLOCK_BENEFICIARY: '04bcf7ad3be7a5c790460be82a713af570f22e0f801f6659ab8e84a52be6969e'
+
+  # Encrypted medical records (@zkclaim/records). A private local node: with --offline nothing is
+  # announced to the public IPFS network, and an unknown CID fails at once instead of hanging.
+  # records/ipfs/001-cors.sh lets the UI at :5173 call the RPC API. Gateway: http://127.0.0.1:8081/ipfs/<cid>
+  ipfs:
+    image: 'ipfs/kubo:v0.43.1'
+    command: ['daemon', '--migrate=true', '--agent-version-suffix=docker', '--offline']
+    ports:
+      - '127.0.0.1:5001:5001'
+      - '127.0.0.1:8081:8080'
+    volumes:
+      - './records/ipfs/001-cors.sh:/container-init.d/001-cors.sh:ro'
+    healthcheck:
+      test: ['CMD', 'ipfs', '--api=/ip4/127.0.0.1/tcp/5001', 'diag', 'healthy']
+      interval: 2s
+      timeout: 5s
+      retries: 30
+      start_period: 5s

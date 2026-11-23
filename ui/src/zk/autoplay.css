@@ -1,0 +1,190 @@
+/* Autoplay ("Play the story"): the caption strip, the ring around what is about to be clicked, and the end card. */
+
+.zk.is-playing .democtl {
+  display: none;
+}
+
+/* room to scroll the last cards of a screen clear of the strip */
+.zk.is-playing .page {
+  padding-bottom: 170px;
+}
+
+/* While the story plays, stray clicks and taps land on this shield instead of the screens. The strip (Pause, Stop)
+   sits above it; autoplay clicks the QR overlay's Done itself, so the overlay lets pointer events fall through too. */
+.play-shield {
+  position: fixed;
+  inset: 0;
+  z-index: 64;
+}
+
+.zk.is-playing .qr-overlay {
+  pointer-events: none;
+}
+
+.play-cta {
+  align-items: flex-start;
+}
+
+.playbar {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  translate: -50% 0;
+  z-index: 65; /* over the tab bar and toasts' column, under the QR overlay */
+  width: min(1040px, calc(100vw - 36px));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px 22px;
+  padding: 14px 18px 19px 22px;
+  background: var(--ink);
+  color: var(--paper);
+  border: 2.5px solid var(--paper);
+  border-radius: 22px;
+  box-shadow: 0 18px 44px rgb(0 0 0 / 0.6);
+  overflow: hidden;
+  animation: play-in 0.3s ease-out both;
+}
+
+.playbar.failed {
+  background: var(--tomato);
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.playbar-text {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.playbar-meta {
+  font-weight: 800;
+  font-size: 11.5px;
+  line-height: 1.15;
+  letter-spacing: 0.015em;
+  text-transform: uppercase;
+  font-stretch: 112%;
+  color: var(--mustard);
+}
+
+.playbar.failed .playbar-meta {
+  color: inherit;
+}
+
+.playbar-title {
+  font-weight: 860;
+  font-size: clamp(20px, 2.1vw, 30px);
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.playbar-doing {
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.3;
+  min-height: 1.3em;
+}
+
+.playbar-ctl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.playbar-progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 6px;
+  background: var(--mustard);
+  transition: width 0.4s ease;
+}
+
+.play-ring {
+  position: fixed;
+  z-index: 75; /* over the QR overlay */
+  pointer-events: none;
+  box-sizing: border-box;
+  border: 4px solid var(--mustard);
+  box-shadow: 0 0 0 3px var(--ink), 0 0 30px 8px rgb(243 207 53 / 0.5);
+  animation: play-ring-in 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+  transition: scale 0.12s ease-out;
+}
+
+.play-ring.tap {
+  scale: 0.92;
+}
+
+.play-end {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(29 28 26 / 0.88);
+  animation: play-in 0.3s ease-out both;
+}
+
+.play-end .card {
+  width: min(620px, 100%);
+}
+
+.play-facts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.play-facts li {
+  border-top: 2px solid currentColor;
+  padding-top: 10px;
+}
+
+.play-facts b {
+  font-weight: 860;
+}
+
+@keyframes play-in {
+  from { opacity: 0; transform: translateY(14px); }
+}
+
+@keyframes play-ring-in {
+  from { opacity: 0; scale: 1.3; }
+}
+
+@media (max-width: 600px) {
+  .playbar {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    width: auto;
+    translate: none;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    padding: 12px 14px 16px;
+    border-radius: 18px;
+  }
+  .is-patient .playbar { bottom: 92px; } /* above the patient tab bar */
+  .playbar-meta { display: none; } /* the speed toggle and Pause/Resume already say it */
+  .playbar-title { font-size: 19px; }
+  .playbar-doing { font-size: 13px; }
+  .zk.is-playing.is-patient .page { padding-bottom: 270px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .playbar,
+  .play-ring,
+  .play-end {
+    animation: none;
+    transition: none;
+  }
+}

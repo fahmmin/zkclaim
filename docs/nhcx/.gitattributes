@@ -1,0 +1,2 @@
+# The fixtures are file snapshots of records/src/test/nhcx.test.ts: CRLF checkouts would fail it.
+*.json text eol=lf

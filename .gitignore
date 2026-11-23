@@ -13,3 +13,13 @@ midnight-level-db/
 .env
 .env.*
 !.env.example
+
+# Vercel CLI project link
+.vercel/
+
+# Film and demo video: raw footage, recordings, intermediates and renders are gigabytes. Only the edit's scripts and
+# notes (videos/edit/src, README.md, transcript.md) are tracked.
+videos/*.mp4
+videos/edit/work/
+videos/edit/out/
+videos/demo/

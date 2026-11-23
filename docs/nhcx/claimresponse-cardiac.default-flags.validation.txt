@@ -1,0 +1,59 @@
+FHIR Validation tool Version 7.0.6 (Git# 86bf796ddc97). Built 2026-11-13T23:28:34.381Z (10 days old)
+  Java:   21.0.10 from C:\Program Files\Android\Android Studio\jbr on amd64 (64bit). 4024MB available
+  Paths:  Current = %USERPROFILE%\Documents\codes\hackasol\docs\nhcx, Package Cache = %USERPROFILE%\.fhir\packages
+  Params: claimresponse-cardiac.json -version 4.0.1 -ig ndhm.in#6.5.0 -profile https://nrces.in/ndhm/fhir/r4/StructureDefinition/ClaimResponseBundle
+  Locale: United States/US
+  Jurisdiction: United States of America
+Loading
+  Loading FHIR v4.0.1 from hl7.fhir.r4.core#4.0.1
+  Load hl7.terminology.r4#6.2.0 - 4288 resources (00:06.112)
+  Load hl7.fhir.uv.extensions.r4#5.2.0 - 759 resources (00:00.932)
+  Loaded FHIR - 8265 resources (00:00.000)
+  Terminology Cache at c:\temp\default-tx-cache\r4
+  Terminology server https://tx.fhir.org - Version Connected to Terminology Server at https://tx.fhir.org (00:01.916)
+  Load hl7.terminology#7.5.0 - 4190 resources (00:01.578)
+  Load hl7.terminology.r5#7.5.0 - 4190 resources (00:00.883)
+  Load hl7.fhir.uv.extensions#5.4.0 - 885 resources (00:00.774)
+  Load hl7.terminology.r4#6.0.2 - 4244 resources (00:00.623)
+  Load hl7.fhir.uv.extensions.r4#5.1.0 - 1397 resources (00:00.938)
+  Load ndhm.in#6.5.0 - 132 resources (00:00.004)
+  Package Summary: [hl7.fhir.r4.core#4.0.1, hl7.fhir.xver-extensions#0.1.0, hl7.terminology.r4#6.2.0, hl7.fhir.uv.extensions.r4#5.2.0, hl7.terminology#7.5.0, hl7.terminology.r5#7.5.0, hl7.fhir.uv.extensions#5.4.0, hl7.terminology.r4#6.0.2, hl7.fhir.uv.extensions.r4#5.1.0, ndhm.in#6.5.0]
+  Get set... 
+  ...go! (00:02.640)
+Cached new session. Cache size = 1
+Sources to validate: claimresponse-cardiac.json
+Validating
+  Profiles: [https://nrces.in/ndhm/fhir/r4/StructureDefinition/ClaimResponseBundle]
+  Validate claimresponse-cardiac.json
+ 00:03.403
+Done. Times: Loading: 00:16.482, validation: 00:03.404. Memory = 567Mb
+
+*FAILURE*: 11 errors, 0 warnings, 16 notes
+  Information @ Bundle.entry[1] (line 169, col6): This element does not match any known slice defined in the profile https://nrces.in/ndhm/fhir/r4/StructureDefinition/ClaimResponseBundle|6.5.0 (this may not be a problem, but you should check that it's not intended to match a slice), validating against FHIR Implementation Guide for ABDM v6.5.0
+  Information @ Bundle.entry[2] (line 207, col6): This element does not match any known slice defined in the profile https://nrces.in/ndhm/fhir/r4/StructureDefinition/ClaimResponseBundle|6.5.0 (this may not be a problem, but you should check that it's not intended to match a slice), validating against FHIR Implementation Guide for ABDM v6.5.0
+  Information @ Bundle.entry[3] (line 250, col6): This element does not match any known slice defined in the profile https://nrces.in/ndhm/fhir/r4/StructureDefinition/ClaimResponseBundle|6.5.0 (this may not be a problem, but you should check that it's not intended to match a slice), validating against FHIR Implementation Guide for ABDM v6.5.0
+  Information @ Bundle.entry[4] (line 293, col6): This element does not match any known slice defined in the profile https://nrces.in/ndhm/fhir/r4/StructureDefinition/ClaimResponseBundle|6.5.0 (this may not be a problem, but you should check that it's not intended to match a slice), validating against FHIR Implementation Guide for ABDM v6.5.0
+  Error @ Bundle.entry[0].resource/*ClaimResponse/00000000-0000-4000-8000-000000000001*/.identifier[0].system (line 34, col69): Example URLs are not allowed in this context (https://example.org/fhir/sid/claim-nullifier), validating against FHIR Implementation Guide for ABDM v6.5.0
+  Error @ Bundle.entry[0].resource/*ClaimResponse/00000000-0000-4000-8000-000000000001*/.patient (line 54, col10): Unable to find a profile match for urn:uuid:00000000-0000-4000-8000-000000000002 among choices: https://nrces.in/ndhm/fhir/r4/StructureDefinition/Patient, validating against FHIR Implementation Guide for ABDM v6.5.0
+  Information @ Bundle.entry[0].resource/*ClaimResponse/00000000-0000-4000-8000-000000000001*/.patient (line 54, col10): Details for urn:uuid:00000000-0000-4000-8000-000000000002 matching against profile https://nrces.in/ndhm/fhir/r4/StructureDefinition/Patient|6.5.0, validating against FHIR Implementation Guide for ABDM v6.5.0
+  Error @ Bundle.entry[0].resource/*ClaimResponse/00000000-0000-4000-8000-000000000001*/.insurer (line 58, col10): Unable to find a profile match for urn:uuid:00000000-0000-4000-8000-000000000003 among choices: https://nrces.in/ndhm/fhir/r4/StructureDefinition/Organization, validating against FHIR Implementation Guide for ABDM v6.5.0
+  Information @ Bundle.entry[0].resource/*ClaimResponse/00000000-0000-4000-8000-000000000001*/.insurer (line 58, col10): Details for urn:uuid:00000000-0000-4000-8000-000000000003 matching against profile https://nrces.in/ndhm/fhir/r4/StructureDefinition/Organization|6.5.0, validating against FHIR Implementation Guide for ABDM v6.5.0
+  Error @ Bundle.entry[0].resource/*ClaimResponse/00000000-0000-4000-8000-000000000001*/.requestor (line 61, col10): Unable to find a profile match for urn:uuid:00000000-0000-4000-8000-000000000004 among choices: https://nrces.in/ndhm/fhir/r4/StructureDefinition/Organization, https://nrces.in/ndhm/fhir/r4/StructureDefinition/Practitioner, https://nrces.in/ndhm/fhir/r4/StructureDefinition/PractitionerRole, validating against FHIR Implementation Guide for ABDM v6.5.0
+  Information @ Bundle.entry[0].resource/*ClaimResponse/00000000-0000-4000-8000-000000000001*/.requestor (line 61, col10): Details for urn:uuid:00000000-0000-4000-8000-000000000004 matching against profile https://nrces.in/ndhm/fhir/r4/StructureDefinition/Organization|6.5.0, validating against FHIR Implementation Guide for ABDM v6.5.0
+  Error @ Bundle.entry[0].resource/*ClaimResponse/00000000-0000-4000-8000-000000000001*/.insurance[0].coverage (line 162, col14): Unable to find a profile match for urn:uuid:00000000-0000-4000-8000-000000000005 among choices: https://nrces.in/ndhm/fhir/r4/StructureDefinition/Coverage, validating against FHIR Implementation Guide for ABDM v6.5.0
+  Information @ Bundle.entry[0].resource/*ClaimResponse/00000000-0000-4000-8000-000000000001*/.insurance[0].coverage (line 162, col14): Details for urn:uuid:00000000-0000-4000-8000-000000000005 matching against profile https://nrces.in/ndhm/fhir/r4/StructureDefinition/Coverage|6.5.0, validating against FHIR Implementation Guide for ABDM v6.5.0
+  Information @ Bundle.entry[0].resource/*ClaimResponse/00000000-0000-4000-8000-000000000001*/.patient (line 54, col10): Details for urn:uuid:00000000-0000-4000-8000-000000000002 matching against profile http://hl7.org/fhir/StructureDefinition/Patient|4.0.1, validating against FHIR Implementation Guide for ABDM v6.5.0
+  Information @ Bundle.entry[0].resource/*ClaimResponse/00000000-0000-4000-8000-000000000001*/.insurer (line 58, col10): Details for urn:uuid:00000000-0000-4000-8000-000000000003 matching against profile http://hl7.org/fhir/StructureDefinition/Organization|4.0.1, validating against FHIR Implementation Guide for ABDM v6.5.0
+  Information @ Bundle.entry[0].resource/*ClaimResponse/00000000-0000-4000-8000-000000000001*/.requestor (line 61, col10): Details for urn:uuid:00000000-0000-4000-8000-000000000004 matching against profile http://hl7.org/fhir/StructureDefinition/Organization|4.0.1, validating against FHIR Implementation Guide for ABDM v6.5.0
+  Information @ Bundle.entry[0].resource/*ClaimResponse/00000000-0000-4000-8000-000000000001*/.insurance[0].coverage (line 162, col14): Details for urn:uuid:00000000-0000-4000-8000-000000000005 matching against profile http://hl7.org/fhir/StructureDefinition/Coverage|4.0.1, validating against FHIR Implementation Guide for ABDM v6.5.0
+  Error @ Bundle.entry[1].resource/*Patient/00000000-0000-4000-8000-000000000002*/.identifier[0].system (line 194, col65): Example URLs are not allowed in this context (https://example.org/fhir/sid/patient-mrn), validating against Base FHIR Standard
+  Error @ Bundle.entry[2].resource/*Organization/00000000-0000-4000-8000-000000000003*/.identifier[0].system (line 232, col64): Example URLs are not allowed in this context (https://example.org/fhir/sid/insurer-id), validating against Base FHIR Standard
+  Error @ Bundle.entry[3].resource/*Organization/00000000-0000-4000-8000-000000000004*/.identifier[0].system (line 275, col65): Example URLs are not allowed in this context (https://example.org/fhir/sid/hospital-id), validating against Base FHIR Standard
+  Error @ Bundle.entry[4].resource/*Coverage/00000000-0000-4000-8000-000000000005*/.identifier[0].system (line 309, col71): Example URLs are not allowed in this context (https://example.org/fhir/sid/policy-commitment), validating against Base FHIR Standard
+  Information @ Bundle.entry[4].resource/*Coverage/00000000-0000-4000-8000-000000000005*/.beneficiary (line 323, col10): Details for urn:uuid:00000000-0000-4000-8000-000000000002 matching against profile http://hl7.org/fhir/StructureDefinition/Patient|4.0.1, validating against FHIR Implementation Guide for ABDM v6.5.0
+  Information @ Bundle.entry[4].resource/*Coverage/00000000-0000-4000-8000-000000000005*/.payor[0] (line 327, col12): Details for urn:uuid:00000000-0000-4000-8000-000000000003 matching against profile http://hl7.org/fhir/StructureDefinition/Organization|4.0.1, validating against FHIR Implementation Guide for ABDM v6.5.0
+  Error @ Bundle.entry[4].resource/*Coverage/00000000-0000-4000-8000-000000000005*/.beneficiary (line 323, col10): Unable to find a profile match for urn:uuid:00000000-0000-4000-8000-000000000002 among choices: https://nrces.in/ndhm/fhir/r4/StructureDefinition/Patient, validating against FHIR Implementation Guide for ABDM v6.5.0
+  Information @ Bundle.entry[4].resource/*Coverage/00000000-0000-4000-8000-000000000005*/.beneficiary (line 323, col10): Details for urn:uuid:00000000-0000-4000-8000-000000000002 matching against profile https://nrces.in/ndhm/fhir/r4/StructureDefinition/Patient|6.5.0, validating against FHIR Implementation Guide for ABDM v6.5.0
+  Error @ Bundle.entry[4].resource/*Coverage/00000000-0000-4000-8000-000000000005*/.payor[0] (line 327, col12): Unable to find a profile match for urn:uuid:00000000-0000-4000-8000-000000000003 among choices: http://hl7.org/fhir/StructureDefinition/RelatedPerson, https://nrces.in/ndhm/fhir/r4/StructureDefinition/Organization, https://nrces.in/ndhm/fhir/r4/StructureDefinition/Patient, validating against FHIR Implementation Guide for ABDM v6.5.0
+  Information @ Bundle.entry[4].resource/*Coverage/00000000-0000-4000-8000-000000000005*/.payor[0] (line 327, col12): Details for urn:uuid:00000000-0000-4000-8000-000000000003 matching against profile https://nrces.in/ndhm/fhir/r4/StructureDefinition/Organization|6.5.0, validating against FHIR Implementation Guide for ABDM v6.5.0
+Done. Times: Loading: 00:16.482, validation: 00:03.404. Max Memory = 3Gb

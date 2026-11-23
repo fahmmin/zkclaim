@@ -1,0 +1,2 @@
+# Runs inside the Linux container: a CRLF checkout on Windows would break it.
+*.sh text eol=lf

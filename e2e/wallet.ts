@@ -1,6 +1,8 @@
 // Synpress-style helpers for 1AM: attach to a role's open test browser and approve 1AM's requests for the dApp.
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { type Browser, type BrowserContext, chromium, type Page } from '@playwright/test';
-import { DAPP_URL, devtoolsPort, type Role } from './roles.ts';
+import { DAPP_URL, devtoolsPort, extensionDir, profileDir, type Role } from './roles.ts';
 
 /**
  * Attaches to a role's open 1AM test browser (started with `npm run e2e:open -- <role>`) and lays out its windows.
@@ -16,10 +18,18 @@ export async function attach(role: Role, waitMs = 0) {
     });
   }
   const [context] = browser.contexts();
-  const worker = context.serviceWorkers().find((w) => w.url().startsWith('chrome-extension://')) ?? (await context.waitForEvent('serviceworker'));
-  const extensionId = new URL(worker.url()).host;
+  const worker = context.serviceWorkers().find((w) => w.url().startsWith('chrome-extension://'));
+  const extensionId = worker ? new URL(worker.url()).host : extensionIdOf(role);
   await arrangeWindows(browser, context, extensionId);
   return { browser, context, extensionId };
+}
+
+/** 1AM's extension id as Chromium recorded it for this profile: its MV3 worker sleeps when idle, so it can't be asked. */
+function extensionIdOf(role: Role): string {
+  const prefs = JSON.parse(readFileSync(path.join(profileDir(role), 'Default', 'Secure Preferences'), 'utf8'));
+  const entry = Object.entries(prefs.extensions?.settings ?? {}).find(([, v]) => (v as { path?: string }).path === extensionDir);
+  if (!entry) throw new Error(`1AM is not installed in the ${role} test browser profile`);
+  return entry[0];
 }
 
 /**
@@ -55,10 +65,10 @@ async function arrangeWindows(browser: Browser, context: BrowserContext, extensi
   await cdp.detach();
 }
 
-/** The dApp page, freshly loaded so 1AM's injected `window.midnight` is in place. */
-export async function openDapp(context: BrowserContext): Promise<Page> {
+/** The dApp's wallet-check page, freshly loaded so 1AM's injected `window.midnight` is in place. */
+export async function openDapp(context: BrowserContext, route = '#/wallet-check'): Promise<Page> {
   const page = context.pages().find((p) => p.url().startsWith(DAPP_URL)) ?? (await context.newPage());
-  await page.goto(DAPP_URL);
+  await page.goto(`${DAPP_URL}/${route}`);
   await page.waitForFunction(() => Boolean((globalThis as { midnight?: Record<string, unknown> }).midnight?.['1am']), null, { timeout: 15_000 });
   return page;
 }

@@ -1,4 +1,5 @@
-:root {
+/* Wallet check page (#/wallet-check), kept as it was for the e2e test. */
+.wallet-check {
   color-scheme: light dark;
   --bg: #f6f6f3;
   --card: #ffffff;
@@ -12,7 +13,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  .wallet-check {
     --bg: #111114;
     --card: #1a1a1f;
     --text: #ececf1;
@@ -23,29 +24,29 @@
   }
 }
 
-body {
-  margin: 0;
+.wallet-check {
+  min-height: 100vh;
   background: var(--bg);
   color: var(--text);
 }
 
-main {
+.wallet-check main {
   max-width: 760px;
   margin: 0 auto;
   padding: 32px 16px 64px;
 }
 
-header h1 {
+.wallet-check header h1 {
   margin: 0 0 4px;
   font-size: 28px;
 }
 
-header p {
+.wallet-check header p {
   margin: 0 0 24px;
   color: var(--muted);
 }
 
-section {
+.wallet-check section {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -53,7 +54,7 @@ section {
   margin-bottom: 16px;
 }
 
-h2 {
+.wallet-check h2 {
   margin: 0 0 12px;
   font-size: 17px;
   display: flex;
@@ -61,7 +62,7 @@ h2 {
   align-items: center;
 }
 
-h2 span {
+.wallet-check h2 span {
   display: inline-grid;
   place-items: center;
   width: 24px;
@@ -72,29 +73,29 @@ h2 span {
   font-size: 13px;
 }
 
-dl {
+.wallet-check dl {
   display: grid;
   grid-template-columns: max-content 1fr;
   gap: 6px 16px;
   margin: 0 0 16px;
 }
 
-dt {
+.wallet-check dt {
   color: var(--muted);
 }
 
-dd {
+.wallet-check dd {
   margin: 0;
   overflow-wrap: anywhere;
 }
 
-.mono {
+.wallet-check .mono {
   font-family: ui-monospace, 'Cascadia Code', Menlo, monospace;
   font-size: 13px;
   overflow-wrap: anywhere;
 }
 
-.row {
+.wallet-check .row {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
@@ -102,14 +103,14 @@ dd {
   margin-top: 12px;
 }
 
-label {
+.wallet-check label {
   display: flex;
   gap: 8px;
   align-items: center;
   flex: 1;
 }
 
-input {
+.wallet-check input {
   flex: 1;
   min-width: 180px;
   padding: 9px 12px;
@@ -120,7 +121,7 @@ input {
   font: inherit;
 }
 
-button {
+.wallet-check button {
   padding: 9px 16px;
   border: 1px solid transparent;
   border-radius: 8px;
@@ -131,33 +132,33 @@ button {
   cursor: pointer;
 }
 
-button.secondary {
+.wallet-check button.secondary {
   background: transparent;
   color: var(--accent);
   border-color: var(--line);
 }
 
-button:disabled {
+.wallet-check button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.hint {
+.wallet-check .hint {
   background: color-mix(in srgb, var(--accent) 9%, transparent);
   border-radius: 8px;
   padding: 12px;
   margin: 0 0 12px;
 }
 
-.hint p {
+.wallet-check .hint p {
   margin: 0 0 8px;
 }
 
-.muted {
+.wallet-check .muted {
   color: var(--muted);
 }
 
-.log {
+.wallet-check .log {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -165,16 +166,16 @@ button:disabled {
   gap: 6px;
 }
 
-.log li {
+.wallet-check .log li {
   font-size: 14px;
   overflow-wrap: anywhere;
 }
 
-.log .bad {
+.wallet-check .log .bad {
   color: var(--bad);
 }
 
-.log time {
+.wallet-check .log time {
   color: var(--muted);
   margin-right: 8px;
   font-variant-numeric: tabular-nums;

@@ -1,0 +1,334 @@
+{
+  "resourceType": "Bundle",
+  "meta": {
+    "profile": [
+      "https://nrces.in/ndhm/fhir/r4/StructureDefinition/ClaimResponseBundle"
+    ],
+    "security": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-Confidentiality",
+        "code": "V",
+        "display": "very restricted"
+      }
+    ]
+  },
+  "type": "collection",
+  "timestamp": "2026-11-05T10:30:00.000Z",
+  "entry": [
+    {
+      "fullUrl": "urn:uuid:00000000-0000-4000-8000-000000000001",
+      "resource": {
+        "resourceType": "ClaimResponse",
+        "id": "00000000-0000-4000-8000-000000000001",
+        "meta": {
+          "profile": [
+            "https://nrces.in/ndhm/fhir/r4/StructureDefinition/ClaimResponse"
+          ]
+        },
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Claim settled on 2026-11-05, outcome complete. Submitted, benefit and payment amounts: INR 240000. Settlement nullifier 1111111111111111111111111111111111111111111111111111111111111111. Ledger payout: 400000000 NIGHT base units (1 NIGHT = 1000000 units). The INR amounts are a separate synthetic business value, not a conversion; no rupees moved.</div>"
+        },
+        "identifier": [
+          {
+            "system": "https://example.org/fhir/sid/claim-nullifier",
+            "value": "1111111111111111111111111111111111111111111111111111111111111111"
+          }
+        ],
+        "status": "active",
+        "type": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "737481003",
+              "display": "Inpatient care management (procedure)"
+            },
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/claim-type",
+              "code": "institutional",
+              "display": "Institutional"
+            }
+          ]
+        },
+        "use": "claim",
+        "patient": {
+          "reference": "urn:uuid:00000000-0000-4000-8000-000000000002"
+        },
+        "created": "2026-11-05T10:30:00.000Z",
+        "insurer": {
+          "reference": "urn:uuid:00000000-0000-4000-8000-000000000003"
+        },
+        "requestor": {
+          "reference": "urn:uuid:00000000-0000-4000-8000-000000000004"
+        },
+        "outcome": "complete",
+        "disposition": "Claim settled: the payer contract verified the claim proof and paid it.",
+        "item": [
+          {
+            "itemSequence": 1,
+            "adjudication": [
+              {
+                "category": {
+                  "coding": [
+                    {
+                      "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+                      "code": "submitted",
+                      "display": "Submitted Amount"
+                    }
+                  ]
+                },
+                "amount": {
+                  "value": 240000,
+                  "currency": "INR"
+                }
+              },
+              {
+                "category": {
+                  "coding": [
+                    {
+                      "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+                      "code": "benefit",
+                      "display": "Benefit Amount"
+                    }
+                  ]
+                },
+                "amount": {
+                  "value": 240000,
+                  "currency": "INR"
+                }
+              }
+            ]
+          }
+        ],
+        "total": [
+          {
+            "category": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+                  "code": "submitted",
+                  "display": "Submitted Amount"
+                }
+              ]
+            },
+            "amount": {
+              "value": 240000,
+              "currency": "INR"
+            }
+          },
+          {
+            "category": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+                  "code": "benefit",
+                  "display": "Benefit Amount"
+                }
+              ]
+            },
+            "amount": {
+              "value": 240000,
+              "currency": "INR"
+            }
+          }
+        ],
+        "payment": {
+          "type": {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/ex-paymenttype",
+                "code": "complete",
+                "display": "Complete"
+              }
+            ]
+          },
+          "date": "2026-11-05",
+          "amount": {
+            "value": 400,
+            "currency": "NIGHT"
+          }
+        },
+        "processNote": [
+          {
+            "number": 1,
+            "type": "display",
+            "text": "Ledger payout: 400000000 NIGHT base units (1 NIGHT = 1000000 units). The INR amounts are a separate synthetic business value, not a conversion; no rupees moved."
+          }
+        ],
+        "insurance": [
+          {
+            "sequence": 1,
+            "focal": true,
+            "coverage": {
+              "reference": "urn:uuid:00000000-0000-4000-8000-000000000005"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:00000000-0000-4000-8000-000000000002",
+      "resource": {
+        "resourceType": "Patient",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "meta": {
+          "profile": [
+            "https://nrces.in/ndhm/fhir/r4/StructureDefinition/Patient"
+          ]
+        },
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Synthetic Test Patient, female, born 1961-03-14. Medical record number SYNTH-MRN-0001.</div>"
+        },
+        "identifier": [
+          {
+            "type": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                  "code": "MR",
+                  "display": "Medical record number"
+                }
+              ]
+            },
+            "system": "https://example.org/fhir/sid/patient-mrn",
+            "value": "SYNTH-MRN-0001"
+          }
+        ],
+        "name": [
+          {
+            "text": "Synthetic Test Patient"
+          }
+        ],
+        "gender": "female",
+        "birthDate": "1961-03-14"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:00000000-0000-4000-8000-000000000003",
+      "resource": {
+        "resourceType": "Organization",
+        "id": "00000000-0000-4000-8000-000000000003",
+        "meta": {
+          "profile": [
+            "https://nrces.in/ndhm/fhir/r4/StructureDefinition/Organization"
+          ]
+        },
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Synthetic Test Insurer, insurance company. Identifier SYNTH-INS-0001.</div>"
+        },
+        "identifier": [
+          {
+            "type": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                  "code": "XX",
+                  "display": "Organization identifier"
+                }
+              ]
+            },
+            "system": "https://example.org/fhir/sid/insurer-id",
+            "value": "SYNTH-INS-0001"
+          }
+        ],
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/organization-type",
+                "code": "ins",
+                "display": "Insurance Company"
+              }
+            ]
+          }
+        ],
+        "name": "Synthetic Test Insurer"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:00000000-0000-4000-8000-000000000004",
+      "resource": {
+        "resourceType": "Organization",
+        "id": "00000000-0000-4000-8000-000000000004",
+        "meta": {
+          "profile": [
+            "https://nrces.in/ndhm/fhir/r4/StructureDefinition/Organization"
+          ]
+        },
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Synthetic Test Hospital, healthcare provider. Identifier SYNTH-HOSP-0001.</div>"
+        },
+        "identifier": [
+          {
+            "type": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                  "code": "PRN",
+                  "display": "Provider number"
+                }
+              ]
+            },
+            "system": "https://example.org/fhir/sid/hospital-id",
+            "value": "SYNTH-HOSP-0001"
+          }
+        ],
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/organization-type",
+                "code": "prov",
+                "display": "Healthcare Provider"
+              }
+            ]
+          }
+        ],
+        "name": "Synthetic Test Hospital"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:00000000-0000-4000-8000-000000000005",
+      "resource": {
+        "resourceType": "Coverage",
+        "id": "00000000-0000-4000-8000-000000000005",
+        "meta": {
+          "profile": [
+            "https://nrces.in/ndhm/fhir/r4/StructureDefinition/Coverage"
+          ]
+        },
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Active health insurance policy of Synthetic Test Patient, paid by Synthetic Test Insurer. Policy commitment 2222222222222222222222222222222222222222222222222222222222222222.</div>"
+        },
+        "identifier": [
+          {
+            "system": "https://example.org/fhir/sid/policy-commitment",
+            "value": "2222222222222222222222222222222222222222222222222222222222222222"
+          }
+        ],
+        "status": "active",
+        "type": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+              "code": "HIP",
+              "display": "health insurance plan policy"
+            }
+          ]
+        },
+        "beneficiary": {
+          "reference": "urn:uuid:00000000-0000-4000-8000-000000000002"
+        },
+        "payor": [
+          {
+            "reference": "urn:uuid:00000000-0000-4000-8000-000000000003"
+          }
+        ]
+      }
+    }
+  ]
+}

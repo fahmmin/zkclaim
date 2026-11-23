@@ -9,13 +9,15 @@
   },
   "workspaces": [
     "contract",
+    "records",
     "cli",
     "ui"
   ],
   "scripts": {
     "compile": "npm run compile -w contract",
-    "test": "npm test -w contract",
+    "test": "npm test -w contract && npm test -w records",
     "demo": "npm run demo -w cli",
+    "demo:access": "npm run demo:access -w cli",
     "fund": "npm run fund -w cli --",
     "ui": "npm run dev -w ui",
     "e2e:open": "node e2e/open.ts",

@@ -6,6 +6,7 @@ import {
 } from '@midnight-ntwrk/compact-runtime';
 import { Contract, type ImpureCircuits, ledger, pureCircuits } from './managed/zkclaim/contract/index.js';
 import { type ClaimPrivateState, createPrivateState, witnesses } from './witnesses.js';
+import { type ActionName, actions } from './actions.js';
 
 export const bytes32 = (n: number): Uint8Array => {
   const a = new Uint8Array(32);
@@ -43,10 +44,13 @@ export class ClaimSimulator {
 
   private constructor(readonly contract: Contract<PS>) {}
 
-  /** `w` lets a test swap in a dishonest witness, the way a malicious prover would. */
-  static async create(insurer: Actor, w: typeof witnesses = witnesses): Promise<ClaimSimulator> {
+  /**
+   * `emergencyKey` is the X25519 public key every record is also sealed to (zeros if unused); `w` lets a test
+   * swap in a dishonest witness, the way a malicious prover would.
+   */
+  static async create(insurer: Actor, w: typeof witnesses = witnesses, emergencyKey = new Uint8Array(32)): Promise<ClaimSimulator> {
     const sim = new ClaimSimulator(new Contract<PS>(w));
-    const init = await sim.contract.initialState(createConstructorContext(insurer.privateState, insurer.coin), pkOf(insurer));
+    const init = await sim.contract.initialState(createConstructorContext(insurer.privateState, insurer.coin), pkOf(insurer), emergencyKey);
     sim.state = init.currentContractState.data;
     return sim;
   }
@@ -60,8 +64,15 @@ export class ClaimSimulator {
     return this.state.toString(false);
   }
 
-  /** Run `id` as `who`; on success commit the public state and that actor's private state. */
-  async call<K extends keyof ImpureCircuits<PS>>(who: Actor, id: K, ...args: Args<ImpureCircuits<PS>[K]>): Promise<Result<ImpureCircuits<PS>[K]>> {
+  /**
+   * Run the circuit or named action (`addHospital`, `grantAccess`, ... see actions.ts) `id` as `who`; on
+   * success commit the public state and that actor's private state.
+   */
+  async call<K extends keyof ImpureCircuits<PS>>(who: Actor, id: K, ...args: Args<ImpureCircuits<PS>[K]>): Promise<Result<ImpureCircuits<PS>[K]>>;
+  async call<A extends ActionName>(who: Actor, id: A, ...args: Parameters<(typeof actions)[A]>): Promise<[]>;
+  async call(who: Actor, name: string, ...given: unknown[]): Promise<unknown> {
+    const { circuitId: id, args } =
+      name in actions ? (actions[name as ActionName] as (...a: unknown[]) => { circuitId: string; args: unknown[] })(...given) : { circuitId: name, args: given };
     const ctx = createCircuitContext({
       circuitId: id,
       contractAddress: this.address,
@@ -70,13 +81,13 @@ export class ClaimSimulator {
       privateState: who.privateState,
       time: this.now,
     });
-    const circuit = this.contract.impureCircuits[id] as (ctx: CircuitContext<PS>, ...a: unknown[]) => Promise<{ result: unknown; context: CircuitContext<PS> }>;
+    const circuit = this.contract.impureCircuits[id as keyof ImpureCircuits<PS>] as (ctx: CircuitContext<PS>, ...a: unknown[]) => Promise<{ result: unknown; context: CircuitContext<PS> }>;
     const { result, context } = await circuit(ctx, ...args);
     const effects = context.callContext.currentQueryContext.effects;
     const sum = (m: Map<unknown, bigint>) => [...m.values()].reduce((a, b) => a + b, 0n);
     this.lastTransfers = { received: sum(effects.unshieldedInputs), paid: sum(effects.claimedUnshieldedSpends) };
     this.state = context.callContext.currentQueryContext.state;
     who.privateState = context.callContext.currentPrivateState ?? who.privateState;
-    return result as Result<ImpureCircuits<PS>[K]>;
+    return result;
   }
 }

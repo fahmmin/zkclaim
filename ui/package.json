@@ -18,12 +18,16 @@
     "@midnight-ntwrk/midnight-js-types": "5.0.1",
     "@midnight-ntwrk/midnight-js-utils": "5.0.1",
     "@midnightntwrk/dapp-connector-api": "4.1.0",
+    "@midnightntwrk/wallet-sdk-address-format": "4.0.1",
     "@zkclaim/contract": "*",
+    "@zkclaim/records": "*",
     "buffer": "^6.0.3",
+    "qrcode": "1.5.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.3"
   },
   "devDependencies": {
+    "@types/qrcode": "1.5.6",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.2",
