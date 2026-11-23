@@ -257,7 +257,7 @@ async function tamper() {
 
 /** The wallet-free receipt for a real Preprod payout: Matches, then one digit changed: Does not match. */
 async function receipt() {
-  await page.goto(URL + RECEIPT_A);
+  await page.goto(process.env.RECEIPT_URL ?? URL + RECEIPT_A);
   await roll();
   mark('open');
   await page.getByText('Matches', { exact: true }).first().waitFor({ timeout: 60_000 });

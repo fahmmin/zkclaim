@@ -269,6 +269,7 @@ function Prove({ record, records, onPick }: { record: MedicalRecord | null; reco
 
   const run = async () => {
     if (!record) return;
+    onPick(record.id); // stay on this bill: once it is paid, the default would jump to the next unpaid one mid-result
     setProof({ ...IDLE, phase: 'proving' });
     let claim: Claim | null = null;
     let message = '';

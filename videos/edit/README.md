@@ -43,6 +43,21 @@ $env:TIMELINE = './demo-timeline.mjs'; node videos/edit/src/build.mjs
 
 The cut is `src/demo-timeline.mjs`.
 
+## The live recording
+
+`videos/live/out/zkclaim-live-demo-v<N>.mp4` (1:28) shows the app and the 1AM wallet side by side, with real transactions on the local devnet:
+- consent;
+- `submitClaim` and PAID;
+- the insurer view;
+- the withdrawal, then the refused claim;
+- a clean-browser receipt check.
+
+The capture comes from the UI session (`videos/live/work/rec/dapp.mp4`, `wallet.mp4`, `marks.json`) on a separate recording contract, so the judges' staging is untouched. The cut is `src/live-timeline.mjs`:
+
+```powershell
+$env:TIMELINE = './live-timeline.mjs'; node videos/edit/src/build.mjs
+```
+
 ## Sound
 
 - **Dialogue:** each clip's own recorded sound (`clean` stage → `work/audio/clean*.wav`), in sync with its picture.

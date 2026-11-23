@@ -111,7 +111,7 @@
         title(g) {
           const [l1, l2] = g.lines ?? ['The', 'Claim'];
           const n = h(`<div class="el full inkbg title"><div class="meta tl">${esc(g.metaL ?? 'A zkClaim film')}</div><div class="meta tr">${esc(g.metaR ?? 'Hackasol 5.0 · W3-01')}</div>
-            <h1>${esc(l1)}<br><i>${esc(l2)}</i></h1><div class="sticker mustard stk"><b>${esc(g.stickerHead ?? 'In Hindi')}</b><span>${esc(g.stickerSub ?? 'with English subtitles')}</span></div></div>`);
+            <h1>${esc(l1)}<br><i>${esc(l2)}</i></h1><div class="sticker mustard stk" style="${g.stickerX != null ? `left:${g.stickerX}px;top:${g.stickerY}px` : ''}"><b>${esc(g.stickerHead ?? 'In Hindi')}</b><span>${esc(g.stickerSub ?? 'with English subtitles')}</span></div></div>`);
           const h1 = n.querySelector('h1'), stk = n.querySelector('.stk');
           return { n, at(t) { const l = life(t, g.in, g.out, { outDur: 0.25 }); const p = easeOut(l.lt / 0.6);
             n.style.opacity = clamp((g.out - t) / 0.25); h1.style.transform = `translateY(${(1 - p) * 60}px)`; h1.style.opacity = p;
@@ -190,11 +190,12 @@
           return { n, at() { return 'on'; } };
         },
         window(g) {
+          // A frame round a recorded screen; the label sticker is optional and sits on the frame's top edge (or at labelY).
           const n = h(`<div class="el"><div class="win" style="position:absolute;left:${g.x - 6}px;top:${g.y - 6}px;width:${g.w + 12}px;height:${g.h + 12}px;border-radius:${g.r + 6}px"></div>
-            <div class="sticker mustard winlabel" style="position:absolute;left:${g.x + 28}px;top:${g.y - 52}px"><b>${esc(g.label)}</b></div></div>`);
+            ${g.label ? `<div class="sticker mustard winlabel" style="position:absolute;left:${g.x + 28}px;top:${g.labelY ?? g.y - 52}px"><b>${esc(g.label)}</b></div>` : ''}</div>`);
           n.style.left = '0px'; n.style.top = '0px';
           const label = n.querySelector('.winlabel');
-          return { n, at(t) { const l = life(t, g.in + 0.12, g.out); label.style.opacity = l.o; label.style.transform = `rotate(-1.5deg) scale(${l.s})`; return `${l.o.toFixed(3)}${l.s.toFixed(3)}`; } };
+          return { n, at(t) { if (!label) return 'on'; const l = life(t, g.in + 0.12, g.out); label.style.opacity = l.o; label.style.transform = `rotate(-1.5deg) scale(${l.s})`; return `${l.o.toFixed(3)}${l.s.toFixed(3)}`; } };
         },
         zero(g) {
           const n = h(`<div class="el zero"><div class="sticker paper" style="display:inline-block"><b>${esc(g.label)}</b></div><div class="big">${esc(g.value)}</div>

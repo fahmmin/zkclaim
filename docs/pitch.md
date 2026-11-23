@@ -7,6 +7,7 @@ A 7–8 minute slot: about 4 minutes of slides, 3 minutes of live demo, and a cl
 | Deck (14 slides, speaker notes) | [zkClaim pitch deck](https://claude.ai/artifact/XdnsZSya9eSmkWjSbZ6mX6). It is private until you share it from its Share menu, which also exports PPTX or PDF. |
 | Film, 2:04, Hindi with English subtitles | `videos/edit/out/the-claim-v2.mp4`, plus `.en.srt` and `.hi.srt` |
 | Recorded demo, 2:03, no wallet needed | `videos/demo/out/zkclaim-demo-v1.mp4` |
+| Live recording, 1:28, real 1AM transactions on the local devnet | `videos/live/out/zkclaim-live-demo-v1.mp4` |
 | Live demo | Local Midnight devnet on the stage laptop, with 1AM on **Local** (Preprod is blocked; see below) |
 | Receipt for a real Preprod payout | [400 NIGHT, block 3,547,892](https://zkclaim.vercel.app/verify.html#v=1&net=preprod&contract=1e8938d2a231357b02962058f15d1b236702564c8d98475d65e4f0020511e977&nullifier=730cdf5ac0362369fd86226e6bbc0eeaf82df81967a01f69b841a63ef0e61287&policy=cd834be2ecf2ec435bec914396d6f39d6b6490b9e72e70f10be310317f08ed26&amount=400000000&at=1795460759): opens on any phone or browser |
 
@@ -72,7 +73,7 @@ Times are cumulative. If you run long, cut slides 6 and 8 (the demo already show
 ### If something breaks
 
 1. **No 1AM popup within 10 s.** Click the 1AM icon; requests also show in its own window.
-2. **Proof stuck for more than 2 minutes, or an error.** Say so plainly: "Live chains have bad days; here's the same flow recorded an hour ago." Play the recorded demo from 0:39 (the payout) and keep talking over it.
+2. **Proof stuck for more than 2 minutes, or an error.** Say so plainly: "Live chains have bad days; here's the same flow recorded on this laptop with real wallet transactions." Play the **live recording** from 0:23 (the hospital's proof) and keep talking over it. It shows each real 1AM approval, PAID, the withdrawal and the refusal.
 3. **Devnet down.** Switch the app to **Demo**, then **Seed the story**, and run the same steps. Label it honestly: "the contract's own logic in the browser; live mode makes real proofs."
 4. **Any time:** the Tamper Lab needs no wallet: **Run all attacks** shows 15 of 15 rejected in a second.
 5. **Local receipt fails:** open the Preprod receipt link above on your phone. It's a real payout on Midnight Preprod, and it still says Matches.
