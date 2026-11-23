@@ -4,7 +4,7 @@ A 7–8 minute slot: about 4 minutes of slides, 3 minutes of live demo, and a cl
 
 | What | Where |
 | --- | --- |
-| Deck (13 slides, speaker notes) | [zkClaim pitch deck](https://claude.ai/artifact/XdnsZSya9eSmkWjSbZ6mX6). It is private until you share it from its Share menu, which also exports PPTX or PDF. |
+| Deck (14 slides, speaker notes) | [zkClaim pitch deck](https://claude.ai/artifact/XdnsZSya9eSmkWjSbZ6mX6). It is private until you share it from its Share menu, which also exports PPTX or PDF. |
 | Film, 2:04, Hindi with English subtitles | `videos/edit/out/the-claim-v2.mp4`, plus `.en.srt` and `.hi.srt` |
 | Recorded demo, 2:03, no wallet needed | `videos/demo/out/zkclaim-demo-v1.mp4` |
 | Live demo | Local Midnight devnet on the stage laptop, with 1AM on **Local** (Preprod is blocked; see below) |
@@ -28,9 +28,10 @@ Times are cumulative. If you run long, cut slides 6 and 8 (the demo already show
 | 5:50 | 8 · Receipt | Skip if you did step 5 of the demo. "Don't trust our dashboard: the receipt reads the chain itself, with no wallet." |
 | 6:05 | 9 · Records | "The record never goes on-chain. Each reader opens only their sections, and the insurer gets no key at all. We export the claim as an NHCX claim response, and it validates against the official profile." |
 | 6:25 | 10 · Why Midnight | "On an ordinary chain, whatever you prove becomes public: you're exposed just for claiming. Midnight is private by default; a private value reaches the chain only if we write disclose(). As far as we know, we're the only team here building on Midnight." |
-| 6:50 | 11 · What's real | "This isn't a mock-up. Eight circuits, 45 contract tests, 46 records tests. On Midnight's Preprod network the first claim was proved and paid in 61 seconds, and a withdrawn claim was refused." |
-| 7:10 | 12 · Scope and next | "Here's exactly where the prototype stops. The proof checks a claim against an approved hospital's record and the patient's consent; the treatment itself is vouched for by the licensed hospital, as today. With funding and a pilot partner: shielded payouts on mainnet, keys in the phone's secure hardware, an independent emergency-key custodian, NHCX and rupee settlement, and a pilot with one insurer." |
-| 7:30 | 13 · Close | "Your claim is not your medical history. Why should proving one mean revealing the other? zkClaim: prove the claim, protect the patient." |
+| 6:45 | 11 · Midnight vs. EVM | "On Ethereum or any EVM layer two, every input and event is public forever. Adding privacy means a separate Circom or Noir circuit plus a Solidity verifier, kept in sync by hand, with nothing stopping a leak into calldata. Here it's one program, the compiler blocks leaks, and the same transaction verifies and pays." |
+| 7:05 | 12 · What's real | "This isn't a mock-up. Eight circuits, 45 contract tests, 46 records tests. On Midnight's Preprod network the first claim was proved and paid in 61 seconds, and a withdrawn claim was refused." |
+| 7:20 | 13 · Scope and next | "Here's exactly where the prototype stops. The proof checks a claim against an approved hospital's record and the patient's consent; the treatment itself is vouched for by the licensed hospital, as today. With funding and a pilot partner: shielded payouts on mainnet, keys in the phone's secure hardware, an independent emergency-key custodian, NHCX and rupee settlement, and a pilot with one insurer." |
+| 7:40 | 14 · Close | "Your claim is not your medical history. Why should proving one mean revealing the other? zkClaim: prove the claim, protect the patient." |
 
 ## Live demo run sheet (3 minutes)
 
