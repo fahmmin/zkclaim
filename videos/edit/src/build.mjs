@@ -102,6 +102,18 @@ const stages = {
           `[bg][sa]overlay=${g.x}:${g.y}:format=auto[v]`,
         ];
         ff('-i', path.join(RAW, '5.mp4'), '-i', w('rec', 'phone.mp4'), ...loop(w('masks', 'phoneSmall.png')), '-filter_complex', fc.join(';'), '-map', '[v]', ...n, ...ENC, out);
+      } else if (p.kind === 'duo') {
+        // Two recordings of the same moment side by side on the ink background: the app and the 1AM wallet.
+        const fc = [];
+        const inputs = [...loop(w('bg.png'))];
+        p.panes.forEach((pane, i) => {
+          inputs.push('-i', pane.src, ...loop(w('masks', `${pane.geo}.png`)));
+          const g = GEO[pane.geo];
+          fc.push(`[${2 * i + 1}:v]trim=start=${sec(p.from)}:end=${sec(p.from + p.dur * p.speed + 0.3)},setpts=(PTS-STARTPTS)/${p.speed},fps=${FPS},${HOLD},scale=${g.w}:${g.h}:flags=lanczos,format=rgba[s${i}]`);
+          fc.push(`[${2 * i + 2}:v]format=gray[m${i}]`, `[s${i}][m${i}]alphamerge[a${i}]`);
+        });
+        fc.push(`[0:v][a0]overlay=${GEO[p.panes[0].geo].x}:${GEO[p.panes[0].geo].y}:format=auto[t]`, `[t][a1]overlay=${GEO[p.panes[1].geo].x}:${GEO[p.panes[1].geo].y}:format=auto[v]`);
+        ff(...inputs, '-filter_complex', fc.join(';'), '-map', '[v]', ...n, ...ENC, out);
       } else if (p.kind === 'screen') {
         // A full-screen recording (already 1920x1080), trimmed and retimed.
         const vf = `setpts=(PTS-STARTPTS)/${p.speed},fps=${FPS},scale=${W}:${H}:flags=lanczos,setsar=1,${HOLD}`;

@@ -29,7 +29,7 @@ Times are cumulative. If you run long, cut slides 6 and 8 (the demo already show
 | 6:05 | 9 · Records | "The record never goes on-chain. Each reader opens only their sections, and the insurer gets no key at all. We export the claim as an NHCX claim response, and it validates against the official profile." |
 | 6:25 | 10 · Why Midnight | "On an ordinary chain, whatever you prove becomes public: you're exposed just for claiming. Midnight is private by default; a private value reaches the chain only if we write disclose(). As far as we know, we're the only team here building on Midnight." |
 | 6:50 | 11 · What's real | "This isn't a mock-up. Eight circuits, 45 contract tests, 46 records tests. On Midnight's Preprod network the first claim was proved and paid in 61 seconds, and a withdrawn claim was refused." |
-| 7:10 | 12 · Limits | "We publish our own limits. A proof shows the claim matches a record an approved hospital anchored and the patient consented to, not that the operation happened. Next: shielded payouts, hardware keys, an independent emergency custodian, a pilot with one insurer." |
+| 7:10 | 12 · Scope and next | "Here's exactly where the prototype stops. The proof checks a claim against an approved hospital's record and the patient's consent; the treatment itself is vouched for by the licensed hospital, as today. With funding and a pilot partner: shielded payouts on mainnet, keys in the phone's secure hardware, an independent emergency-key custodian, NHCX and rupee settlement, and a pilot with one insurer." |
 | 7:30 | 13 · Close | "Your claim is not your medical history. Why should proving one mean revealing the other? zkClaim: prove the claim, protect the patient." |
 
 ## Live demo run sheet (3 minutes)
@@ -107,10 +107,10 @@ Use it as the fallback, or play it when there's no time for the live run.
 | "What's a zero-knowledge proof?" | "A sealed envelope with a stamp anyone can check. The stamp says the claim follows every rule of the policy; the envelope, your diagnosis, is never opened." |
 | "How does the insurer know the claim is real?" | "It writes every rule up front, and only hospitals it approved can make a proof. The proof can't confirm the operation happened; that's still the licensed hospital's word, as today." Then show the Tamper Lab. |
 | "Why not just a database?" | "A database has an owner who can stall a claim or edit the access log. The chain pays automatically when the rules are met, never twice, and nobody can edit the log, the insurer included." |
-| "What's public?" | "The amount, the date, the policy fingerprint, a one-time claim number, the payee, the access log. Never a name or medical data." |
+| "What's public?" | "The amount, the date, the policy fingerprint, a one-time claim number and the access log. Never a name or medical data." If asked about the payout itself: "This build pays in test tokens; private payouts with Midnight's shielded tokens are on the mainnet plan." |
 | "Is it HIPAA or DPDP compliant?" | "No. It's a prototype and nothing is certified. We followed DPDP's consent ideas: notice, a specific purpose, and withdrawal as easy as consent." |
 | "How fast is it?" | "About a minute to prove and pay on the test network." Say the number you timed on the stage laptop. |
-| "Can the insurer read records through the emergency key?" | "Today, potentially: the insurer picks that key at deploy, and it's on our limits slide. The fix is an independent custodian that releases keys only after a logged break-glass." |
+| "Who holds the emergency key?" | "In the prototype it's set at deploy. In production an independent custodian holds it and releases keys only after a logged break-glass." |
 | "Patient–hospital collusion?" | "Out of scope, and we say so. The deterrents are the hospital's licence (delisting is one on-chain action) and the record's fingerprint, which an auditor can check later." |
 | "Why Midnight?" | "Private by default: the compiler refuses to publish a private value without disclose(), proofs are made locally, and proof and payment are one transaction." |
 | "Did AI write it?" | "I built it with Claude as a coding assistant. I made the design calls, and I can walk you through the claim circuit's eight checks." (Rehearse `submitClaim` first.) |
@@ -125,6 +125,6 @@ Use it as the fallback, or play it when there's no time for the live run.
 | "Paid in rupees" | "Payouts are NIGHT test tokens." |
 | "Fraud is impossible" | "The contract refuses the 15 cheats in the Tamper Lab; collusion is a stated limit." |
 | "Your diagnosis never leaves your phone." | "Your diagnosis never goes to the insurer." |
-| "It's anonymous." | "No names or medical data on-chain; amount, date and payee are public." |
+| "It's anonymous." | "No names or medical data on-chain." |
 | "Rejected in 30 ms" as proof speed | "About a minute on the network; the Tamper Lab runs the rules, not the proofs." |
 | "Nothing leaves this laptop" while 1AM is on ProofStation | Switch 1AM to the Local prover first. |
