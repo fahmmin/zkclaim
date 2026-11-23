@@ -1,0 +1,23 @@
+{
+  "name": "@zkclaim/contract",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "compile": "node scripts/compile.mjs",
+    "compile:fast": "node scripts/compile.mjs --skip-zk",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@midnight-ntwrk/compact-runtime": "0.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "5.9.3",
+    "vitest": "5.0.4"
+  }
+}

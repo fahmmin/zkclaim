@@ -1,0 +1,181 @@
+:root {
+  color-scheme: light dark;
+  --bg: #f6f6f3;
+  --card: #ffffff;
+  --text: #1b1b1f;
+  --muted: #66666f;
+  --line: #e2e2dd;
+  --accent: #3b5bdb;
+  --bad: #c92a2a;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  line-height: 1.5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111114;
+    --card: #1a1a1f;
+    --text: #ececf1;
+    --muted: #9a9aa6;
+    --line: #2c2c34;
+    --accent: #748ffc;
+    --bad: #ff8787;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+main {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+}
+
+header h1 {
+  margin: 0 0 4px;
+  font-size: 28px;
+}
+
+header p {
+  margin: 0 0 24px;
+  color: var(--muted);
+}
+
+section {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+h2 {
+  margin: 0 0 12px;
+  font-size: 17px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+h2 span {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  margin: 0 0 16px;
+}
+
+dt {
+  color: var(--muted);
+}
+
+dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.mono {
+  font-family: ui-monospace, 'Cascadia Code', Menlo, monospace;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 12px;
+}
+
+label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex: 1;
+}
+
+input {
+  flex: 1;
+  min-width: 180px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+button {
+  padding: 9px 16px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button.secondary {
+  background: transparent;
+  color: var(--accent);
+  border-color: var(--line);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hint {
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 0 0 12px;
+}
+
+.hint p {
+  margin: 0 0 8px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.log li {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.log .bad {
+  color: var(--bad);
+}
+
+.log time {
+  color: var(--muted);
+  margin-right: 8px;
+  font-variant-numeric: tabular-nums;
+}

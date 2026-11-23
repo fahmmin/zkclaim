@@ -1,0 +1,15 @@
+node_modules/
+dist/
+# Compiler output (prover keys are tens of MB); regenerate with `npm run compile`.
+contract/src/managed/
+.wallet-state/
+# Midnight testkit run logs (wallet sync details).
+logs/
+# 1AM test-browser extension and wallet profiles: downloaded build and encrypted test wallets, never committed.
+e2e/.extensions/
+e2e/.profiles/
+e2e/test-results/
+midnight-level-db/
+.env
+.env.*
+!.env.example

@@ -1,0 +1,180 @@
+// zkClaim: a hospital proves an insurance claim is valid without revealing the patient's
+// diagnosis, procedure or record, and the contract pays the claim automatically.
+//
+// Public on-chain: claim amount, policy commitment, claim nullifier, hospital-list root,
+// record-tree root, consent tag, payee address.
+// Private (witnesses only): procedure code, policy terms (limit, expiry, covered set),
+// treatment record, which approved hospital is claiming, and every salt and secret key.
+pragma language_version 0.28;
+
+import CompactStandardLibrary;
+
+// Unused `covered` slots are 0, so procedure code 0 is never valid.
+export struct PolicyTerms {
+  holderPk: Bytes<32>;
+  limit: Uint<64>;
+  expiresAt: Uint<64>;
+  covered: Vector<8, Uint<32>>;
+}
+
+// contentHash binds the encrypted off-chain record (FHIR bundle) to this claim.
+export struct TreatmentRecord {
+  patientPk: Bytes<32>;
+  hospitalPk: Bytes<32>;
+  procedureCode: Uint<32>;
+  amount: Uint<64>;
+  contentHash: Bytes<32>;
+}
+
+export ledger insurer: Bytes<32>;
+export ledger hospitals: HistoricMerkleTree<10, Bytes<32>>;
+export ledger policies: Set<Bytes<32>>;
+export ledger spent: Map<Bytes<32>, Uint<64>>;
+export ledger records: HistoricMerkleTree<16, Bytes<32>>;
+export ledger recordCids: Map<Bytes<32>, Opaque<"string">>;
+export ledger consents: Set<Bytes<32>>;
+export ledger claims: Set<Bytes<32>>;
+export ledger totalPaid: Uint<64>;
+
+witness secretKey(): Bytes<32>;
+witness policyTerms(): PolicyTerms;
+witness policySalt(): Bytes<32>;
+witness treatmentRecord(): TreatmentRecord;
+witness recordSalt(): Bytes<32>;
+witness hospitalPath(pk: Bytes<32>): MerkleTreePath<10, Bytes<32>>;
+witness recordPath(commitment: Bytes<32>): MerkleTreePath<16, Bytes<32>>;
+
+constructor(insurerPk: Bytes<32>) {
+  insurer = disclose(insurerPk);
+}
+
+export pure circuit publicKey(sk: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<2, Bytes<32>>>([pad(32, "zkclaim:pk:v1"), sk]);
+}
+
+export pure circuit policyCommitment(terms: PolicyTerms, salt: Bytes<32>): Bytes<32> {
+  return persistentCommit<PolicyTerms>(terms, salt);
+}
+
+export pure circuit recordCommitment(record: TreatmentRecord, salt: Bytes<32>): Bytes<32> {
+  return persistentCommit<TreatmentRecord>(record, salt);
+}
+
+// The record salt is private, so neither tag can be linked back to the public record leaf.
+export pure circuit consentTag(recordC: Bytes<32>, policyC: Bytes<32>, salt: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<4, Bytes<32>>>([pad(32, "zkclaim:consent:v1"), recordC, policyC, salt]);
+}
+
+export pure circuit claimNullifier(recordC: Bytes<32>, salt: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<3, Bytes<32>>>([pad(32, "zkclaim:nullifier:v1"), recordC, salt]);
+}
+
+circuit assertInsurer(): [] {
+  assert(publicKey(secretKey()) == insurer, "Only the insurer can do this");
+}
+
+// Proves the caller is on the approved list without revealing which entry.
+circuit approvedHospitalPk(): Bytes<32> {
+  const pk = publicKey(secretKey());
+  const path = hospitalPath(pk);
+  assert(path.leaf == pk, "Hospital path is for a different key");
+  assert(hospitals.checkRoot(disclose(merkleTreePathRoot<10, Bytes<32>>(path))), "Hospital is not on the approved list");
+  return pk;
+}
+
+// ---- Insurer ----
+
+export circuit addHospital(pk: Bytes<32>): [] {
+  assertInsurer();
+  hospitals.insert(disclose(pk));
+}
+
+// Overwrites the leaf and forgets old roots, so proofs built on earlier roots stop verifying.
+export circuit removeHospital(index: Uint<64>): [] {
+  assertInsurer();
+  hospitals.insertIndexDefault(disclose(index));
+  hospitals.resetHistory();
+}
+
+export circuit issuePolicy(commitment: Bytes<32>): [] {
+  assertInsurer();
+  policies.insert(disclose(commitment));
+}
+
+// Deposits NIGHT into the payout pool. Anyone may top it up.
+export circuit fundPool(amount: Uint<128>): [] {
+  receiveUnshielded(default<Bytes<32>>, disclose(amount));
+}
+
+// ---- Hospital ----
+
+export circuit anchorRecord(commitment: Bytes<32>, cid: Opaque<"string">): [] {
+  approvedHospitalPk();
+  const c = disclose(commitment);
+  assert(!recordCids.member(c), "Record already anchored");
+  records.insert(c);
+  recordCids.insert(c, disclose(cid));
+}
+
+// ---- Patient ----
+
+// The patient authorises a claim on one record under one policy. Only the record's own
+// patient can produce the tag, and it reveals nothing about either.
+export circuit consentToClaim(): [] {
+  const pk = publicKey(secretKey());
+  const terms = policyTerms();
+  const record = treatmentRecord();
+  assert(terms.holderPk == pk, "Policy belongs to someone else");
+  assert(record.patientPk == pk, "Record belongs to someone else");
+  const salt = recordSalt();
+  const tag = consentTag(recordCommitment(record, salt), policyCommitment(terms, policySalt()), salt);
+  consents.insert(disclose(tag));
+}
+
+// ---- The claim proof ----
+
+export circuit submitClaim(amount: Uint<64>, asOf: Uint<64>, payTo: UserAddress): Bytes<32> {
+  // 1. Claim comes from a licensed hospital on the approved list.
+  const hospitalPk = approvedHospitalPk();
+
+  // 2. Claim is tied to a policy the insurer issued.
+  const terms = policyTerms();
+  const policyC = disclose(policyCommitment(terms, policySalt()));
+  assert(policies.member(policyC), "Unknown policy");
+
+  // 3. Policy is active: expiry > asOf >= current block time.
+  assert(blockTimeLte(disclose(asOf)), "Claim date is in the past");
+  assert(terms.expiresAt > asOf, "Policy has expired");
+
+  // 4. The treatment record exists on-chain and belongs to this hospital and policy holder.
+  const record = treatmentRecord();
+  const salt = recordSalt();
+  const recordC = recordCommitment(record, salt);
+  const path = recordPath(recordC);
+  assert(path.leaf == recordC, "Record path is for a different record");
+  assert(records.checkRoot(disclose(merkleTreePathRoot<16, Bytes<32>>(path))), "Record was never anchored");
+  assert(record.hospitalPk == hospitalPk, "Record was issued by another hospital");
+  assert(record.patientPk == terms.holderPk, "Record is not for this policy holder");
+
+  // 5. The procedure is covered, and the amount matches the record and fits the limit.
+  assert(record.procedureCode != 0, "Missing procedure code");
+  assert(fold((hit, code) => hit || code == record.procedureCode, false, terms.covered), "Procedure is not covered by this policy");
+  assert(record.amount == amount, "Amount does not match the treatment record");
+  const used = spent.member(policyC) ? spent.lookup(policyC) : 0 as Uint<64>;
+  const next = used + disclose(amount);
+  assert(next <= terms.limit, "Claim exceeds the policy limit");
+  spent.insert(policyC, next as Uint<64>);
+
+  // 6. The patient consented to this exact claim.
+  assert(consents.member(disclose(consentTag(recordC, policyC, salt))), "Patient has not consented to this claim");
+
+  // 7. Each record can be claimed once.
+  const nullifier = disclose(claimNullifier(recordC, salt));
+  assert(!claims.member(nullifier), "Claim already settled");
+  claims.insert(nullifier);
+
+  // 8. Pay the hospital from the pool.
+  totalPaid = (totalPaid + disclose(amount)) as Uint<64>;
+  sendUnshielded(default<Bytes<32>>, disclose(amount) as Uint<128>, right<ContractAddress, UserAddress>(disclose(payTo)));
+  return nullifier;
+}
